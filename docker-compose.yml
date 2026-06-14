@@ -1,0 +1,21 @@
+services:
+  captcha-bypass:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: captcha-bypass:local
+    container_name: captcha-bypass
+    ports:
+      - '7788:7788'
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./data/models:/app/models
+      - ./data/.env:/app/.env
+    restart: always
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://localhost:7788/health || exit 1']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

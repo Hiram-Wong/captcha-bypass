@@ -14,7 +14,7 @@ on:
         type: choice
         options:
           - all
-          - windows
+          - win
           - mac
           - linux
   push:
@@ -25,107 +25,109 @@ permissions:
   contents: write
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Resolve tag
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
+  build:
+    needs: prepare
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ${{ fromJSON(
-          github.event_name == 'push' && '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest", "ubuntu-24.04-arm"]' ||
-          github.event_name == 'pull_request_target' && '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest", "ubuntu-24.04-arm"]' ||
-          github.event.inputs.platform == 'all' && '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest", "ubuntu-24.04-arm"]' ||
-          github.event.inputs.platform == 'linux' && '["ubuntu-latest", "ubuntu-24.04-arm"]' ||
-          github.event.inputs.platform == 'windows' && '["windows-latest", "windows-11-arm"]' ||
-          github.event.inputs.platform == 'mac' && '["macos-latest"]' ||
-          '["macos-latest", "windows-latest", "windows-11-arm", "ubuntu-latest", "ubuntu-24.04-arm"]'
+        include: >-
+          ${{ fromJSON(
+            (github.event_name == 'push' || inputs.platform == 'all') && '[
+              {"os": "macos-latest",      "arch": "arm64", "build": "build:mac:arm64"},
+              {"os": "macos-15-intel",    "arch": "x64",   "build": "build:mac:x64"},
+              {"os": "windows-latest",    "arch": "x64",   "build": "build:win:x64"},
+              {"os": "windows-11-arm",    "arch": "arm64", "build": "build:win:arm64"},
+              {"os": "ubuntu-latest",     "arch": "x64",   "build": "build:linux:x64"},
+              {"os": "ubuntu-24.04-arm",  "arch": "arm64", "build": "build:linux:arm64"}
+            ]' ||
+            inputs.platform == 'mac' && '[
+              {"os": "macos-latest",      "arch": "arm64", "build": "build:mac:arm64"},
+              {"os": "macos-15-intel",    "arch": "x64",   "build": "build:mac:x64"}
+            ]' ||
+            inputs.platform == 'win' && '[
+              {"os": "windows-latest",    "arch": "x64",   "build": "build:win:x64"},
+              {"os": "windows-11-arm",    "arch": "arm64", "build": "build:win:arm64"}
+            ]' ||
+            inputs.platform == 'linux' && '[
+              {"os": "ubuntu-latest",     "arch": "x64",   "build": "build:linux:x64"},
+              {"os": "ubuntu-24.04-arm",  "arch": "arm64", "build": "build:linux:arm64"}
+            ]' || '[]'
           ) }}
       fail-fast: false
 
     steps:
-      - name: Check out Git repository
+      - name: Checkout repo
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.sha || '' }}
 
-      - name: Get release tag
-        id: get-tag
-        shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "pull_request_target" ]; then
-            # Extract version from branch name (release/v1.0.0 -> v1.0.0)
-            BRANCH="${{ github.event.pull_request.head.ref }}"
-            echo "tag=${BRANCH#release/}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Install Node.js
-        uses: actions/setup-node@v6
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: ${{ matrix.os == 'ubuntu-latest' && '20' || '24' }}
+          bun-version-file: '.bun-version'
 
       - name: Install dependencies
-        run: npm install
-      
-      - name: Build Linux X64
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/{darwin,win32}
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/linux/arm64
-          npm run build:linux:x64
-      
-      - name: Build Linux ARM64
-        if: matrix.os == 'ubuntu-24.04-arm'
-        run: |
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/{darwin,win32}
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/linux/x64
-          npm run build:linux:arm64
+        run: bun install
 
-      - name: Build Mac
-        if: matrix.os == 'macos-latest'
-        run: |
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/{linux,win32}
-          npm run build:mac
-
-      - name: Build Windows X64
-        if: matrix.os == 'windows-latest'
+      - name: Set version
         shell: bash
-        run: |
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/{darwin,linux}
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/win32/arm64
-          npm run build:win:x64
+        run: npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
 
-      - name: Build Windows ARM64
-        if: matrix.os == 'windows-11-arm'
+      - name: Build binary
         shell: bash
-        run: |
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/{darwin,linux}
-          rm -rf ./node_modules/onnxruntime-node/bin/napi-v3/win32/x64
-          npm run build:win:arm64
+        run: bun run ${{ matrix.build }}
 
-      - name: List files to be uploaded
-        shell: bash
-        run: |
-          echo "准备上传的文件:"
-          if [ -x "$(command -v tree)" ]; then
-            tree dist
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-            dir dist
-          else
-            ls -la dist
-          fi
-          echo "总计: $(find dist -type f | wc -l) 个文件"
-
-      - name: Upload artifact
+      - name: Upload binary
         uses: actions/upload-artifact@v7
         with:
-          name: ocr-bin-${{ matrix.os }}
-          path: dist/*
+          name: binary-${{ matrix.os }}
+          path: dist/captcha-bypass-*
           retention-days: 3
-          compression-level: 8
+
+      - name: Upload models
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: models
+          path: dist/models/**
+          retention-days: 3
+
+  release:
+    needs: [prepare, build]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
+          path: dist/
+          merge-multiple: true
+
+      - name: Download models
+        uses: actions/download-artifact@v4
+        with:
+          name: models
+          path: dist/models/
+
+      - name: List artifacts
+        run: ls -lhR dist/
 
       - name: Release
         uses: ncipollo/release-action@v1
@@ -133,6 +135,6 @@ jobs:
           draft: true
           allowUpdates: true
           makeLatest: false
-          tag: ${{ steps.get-tag.outputs.tag }}
+          tag: ${{ needs.prepare.outputs.tag }}
           artifacts: 'dist/*'
           token: ${{ secrets.GITHUB_TOKEN }}

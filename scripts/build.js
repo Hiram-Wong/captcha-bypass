@@ -1,95 +1,106 @@
-const fs = require("fs");
-const path = require("path");
-const { exec } = require("@yao-pkg/pkg");
+import fs from 'node:fs';
+import fsp from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIST_DIR = path.resolve(__dirname, "../dist");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = path.resolve(__dirname, '..');
+const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
+const ENTRY_FILE = path.resolve(ROOT_DIR, 'src', 'index.ts');
+const MODELS_DIR = path.resolve(ROOT_DIR, 'models');
 
-const DEFAULT_PLATFORM = ["macos", "win", "linux"];
-const DEFAULT_ARCH = ["x64", "arm64"];
+const PLATFORM = {
+  darwin: { bun: 'darwin', name: 'mac' },
+  win32: { bun: 'windows', name: 'win', ext: '.exe' },
+  linux: { bun: 'linux', name: 'linux' },
+};
 
-/**
- * 解析 CLI 参数
- */
+const ARCH = ['x64', 'arm64'];
+
 const parseArgs = () => {
   const args = process.argv.slice(2);
-  const result = {};
+  let platform = Object.keys(PLATFORM);
+  let arch = ARCH;
 
   for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-
-    if (!arg.startsWith("--")) continue;
-
-    const key = arg.slice(2);
-    const value = args[i + 1];
-
-    if (value && !value.startsWith("--")) {
-      result[key] = value;
-      i++;
+    if (args[i] === '--platform') {
+      const v = args[++i];
+      if (!PLATFORM[v]) throw new Error(`Unknown platform: ${v}`);
+      platform = [v];
+    }
+    if (args[i] === '--arch') {
+      const v = args[++i];
+      if (!ARCH.includes(v)) throw new Error(`Unknown arch: ${v}`);
+      arch = [v];
     }
   }
 
-  const parseList = (val, def) => {
-    if (!val) return def;
-    return val.split(",").map(v => v.trim()).filter(Boolean);
-  };
-
-  return {
-    platform: parseList(result.platform, DEFAULT_PLATFORM),
-    arch: parseList(result.arch, DEFAULT_ARCH),
-  };
+  return platform.flatMap((p) => arch.map((a) => ({ platform: p, arch: a })));
 };
 
-/**
- * 构建单个目标
- */
+const copyRuntimeModels = async () => {
+  if (!fs.existsSync(MODELS_DIR)) return;
+  const dest = path.resolve(DIST_DIR, 'models');
+  await fsp.rm(dest, { recursive: true, force: true });
+  await fsp.cp(MODELS_DIR, dest, { recursive: true });
+};
+
 const buildOne = async (platform, arch) => {
-  const ext = platform === "win" ? ".exe" : "";
-  const version = platform === "win" ? "24" : "20";
-  
-  const target = `node${version}-${platform}-${arch}`;
-  const output = `ocr-bin-${platform}-${arch}${ext}`;
-  const outputPath = path.join(DIST_DIR, output);
+  const cfg = PLATFORM[platform];
+  const target = `bun-${cfg.bun}-${arch}`;
+  const output = `captcha-bypass-${cfg.name}-${arch}${cfg.ext ?? ''}`;
+  const outputPath = path.resolve(DIST_DIR, output);
 
-  console.log(`\n🚀 Building: ${target}`);
-  console.log(`📦 Output: ${outputPath}`);
+  console.log(`Building: ${target}  →  ${output}`);
 
-  await exec([
-    "./index.js",
-    "--config", "package.json",
-    "--target", target,
-    "--output", outputPath,
-    "--options", "max-old-space-size=8192",
-    "--compress", "Gzip", // Gzip Brotli(so slow)
-  ]);
-  
-  console.log(`✅ Done: ${outputPath}`);
-};
+  const result = await Bun.build({
+    entrypoints: [ENTRY_FILE],
+    target: 'bun',
+    minify: true,
+    bytecode: true,
+    naming: { asset: '[name].[ext]' },
+    compile: {
+      target,
+      outfile: outputPath,
+    },
+  });
 
-/**
- * 构建入口
- */
-const main = async () => {
-  if (!fs.existsSync(DIST_DIR)) {
-    fs.mkdirSync(DIST_DIR, { recursive: true });
+  if (!result.success) {
+    for (const log of result.logs) console.error(log);
+    throw new Error(`Build failed for ${target}`);
   }
 
-  const { platform, arch } = parseArgs();
-
-  console.log("📌 Platform:", platform.join(", "));
-  console.log("📌 Arch:", arch.join(", "));
-
-  try {
-    for (const p of platform) {
-      for (const a of arch) {
-        await buildOne(p, a);
-      }
+  if (platform === 'darwin') {
+    try {
+      await Bun.spawn(['codesign', '--remove-signature', outputPath]).exited;
+    } catch {
+      /* ignore */
     }
-
-    console.log("\n🎉 All builds completed!");
-  } catch (err) {
-    console.error("\n❌ Build failed:", err);
-    process.exit(1);
+    const proc = Bun.spawn(['codesign', '--force', '--sign', '-', outputPath]);
+    await proc.exited;
+    if (proc.exitCode !== 0) {
+      console.warn(`Warning: codesign exited with code ${proc.exitCode}`);
+    }
   }
+
+  console.log(`Done: ${output}\n`);
 };
 
-main();
+const main = async () => {
+  const targets = parseArgs();
+
+  await fsp.rm(DIST_DIR, { recursive: true, force: true });
+  await fsp.mkdir(DIST_DIR, { recursive: true });
+  await copyRuntimeModels();
+
+  for (const { platform, arch } of targets) {
+    await buildOne(platform, arch);
+  }
+
+  console.log(`All ${targets.length} build(s) completed!`);
+};
+
+main().catch((err) => {
+  console.error('\nBuild failed:', err);
+  process.exit(1);
+});

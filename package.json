@@ -1,49 +1,37 @@
 {
-  "name": "ocr-bin",
-  "version": "1.0.5",
-  "type": "commonjs",
-  "main": "index.js",
-  "homepage": "https://github.com/Hiram-Wong/ddddocr-node-bin",
+  "name": "captcha-bypass",
+  "version": "1.0.6",
+  "type": "module",
+  "packageManager": "bun@1.3.14",
+  "main": "dist/index.js",
+  "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
   "scripts": {
-    "dev": "node index.js",
-    "build": "node scripts/build.js",
-    "build:win:x64": "node scripts/build.js --platform win --arch x64",
-    "build:win:arm64": "node scripts/build.js --platform win --arch arm64",
-    "build:mac:x64": "node scripts/build.js --platform macos --arch x64",
-    "build:mac:arm64": "node scripts/build.js --platform macos --arch arm64",
-    "build:linux:x64": "node scripts/build.js --platform linux --arch x64",
-    "build:linux:arm64": "node scripts/build.js --platform linux --arch arm64",
-    "build:win": "node scripts/build.js --platform win",
-    "build:mac": "node scripts/build.js --platform macos",
-    "build:linux": "node scripts/build.js --platform linux"
+    "format": "bunx prettier --write src scripts",
+    "dev": "bun --watch src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "bun scripts/build.js",
+    "build:win": "bun scripts/build.js --platform win32",
+    "build:win:x64": "bun scripts/build.js --platform win32 --arch x64",
+    "build:win:arm64": "bun scripts/build.js --platform win32 --arch arm64",
+    "build:mac": "bun scripts/build.js --platform darwin",
+    "build:mac:x64": "bun scripts/build.js --platform darwin --arch x64",
+    "build:mac:arm64": "bun scripts/build.js --platform darwin --arch arm64",
+    "build:linux": "bun scripts/build.js --platform linux",
+    "build:linux:x64": "bun scripts/build.js --platform linux --arch x64",
+    "build:linux:arm64": "bun scripts/build.js --platform linux --arch arm64",
+    "generate:token": "bun run ./scripts/generate-token.js"
   },
   "dependencies": {
+    "@elysia/cors": "^1.4.2",
+    "@elysia/openapi": "^1.4.15",
     "@techstark/opencv-js": "^4.12.0-release.1",
-    "body-parser": "^2.2.2",
-    "ddddocr-node": "2.2.0",
-    "express": "^5.2.1",
-    "multer": "^2.1.1"
+    "dotenv": "^17.4.2",
+    "elysia": "^1.4.28",
+    "jimp": "^1.6.0",
+    "onnxruntime-web": "^1.26.0"
   },
   "devDependencies": {
-    "@yao-pkg/pkg": "^6.15.0"
-  },
-  "pkg": {
-    "assets": [
-      "node_modules/@jimp/**/*",
-      "node_modules/@tensorflow/**/*",
-      "node_modules/ddddocr-node/onnx/*",
-      "node_modules/onnxruntime-node/bin/**/*"
-    ],
-    "scripts": [],
-    "patches": {},
-    "targets": [
-      "node24-win-x64",
-      "node24-win-arm64",
-      "node20-macos-x64",
-      "node20-macos-arm64",
-      "node20-linux-x64",
-      "node20-linux-arm64"
-    ],
-    "outputPath": "dist"
+    "@types/bun": "^1.3.14",
+    "typescript": "^5.9.3"
   }
 }

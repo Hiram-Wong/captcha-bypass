@@ -1,6 +1,11 @@
 # Build Outputs
 dist
 
+# Local config
+.env
+.env.*
+!.env.example
+
 # Dependencies
 node_modules
 
