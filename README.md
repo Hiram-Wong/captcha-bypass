@@ -1,11 +1,49 @@
-项目采用`onnxruntime-wasm`解决bun打包跨平台二进制
+## 📌 介绍
+
+基于 `onnxruntime-wasm` 实现跨平台 ONNX 模型推理，支持 Bun 编译为独立二进制，无需 GPU 即可运行。
 
 ## 📖 使用
 
-> 使用前请配置环境变量
+### 部署运行
 
-<details>
-<summary>展开查看环境变量</summary>
+#### 方式一：二进制 + 模型（推荐）
+
+1. 从 [Releases](https://github.com/Hiram-Wong/captcha-bypass/releases) 下载对应平台的二进制和模型文件。
+2. 将二进制和 `models/` 目录放在同一文件夹下：
+
+```
+captcha-bypass/
+├── captcha-bypass-mac-arm64   # 二进制（按实际平台选择）
+└── models/
+    ├── detect.onnx
+    ├── ocr.onnx
+    ├── ocr.json
+    └── rotate.onnx
+```
+
+3. 配置环境变量后启动：
+
+```bash
+# macOS / Linux
+chmod +x captcha-bypass-mac-arm64
+./captcha-bypass-mac-arm64
+
+# Windows
+./captcha-bypass-win-x64.exe
+```
+
+> 模型文件通过环境变量指定；不设置时默认加载二进制同级 `models/` 目录下的对应文件。
+
+#### 方式二：Docker
+
+```bash
+docker pull ghcr.io/hiram-wong/captcha-bypass:latest
+docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
+```
+
+> 模型已内置于镜像，无需额外挂载。通过 `-e` 传环境变量覆盖配置。
+
+### 环境变量
 
 | 配置               | 类型                              | 默认值      | 说明                                                            |
 | :----------------- | :-------------------------------- | :---------- | :-------------------------------------------------------------- |
@@ -20,8 +58,6 @@
 | OCR_CHARSET_RANGES | `string`                          | 空字符串    | OCR 字符集范围过滤，如 `"0123456789"`；按字符拆分后过滤识别结果 |
 | ROTATE_MODEL_PATH  | `string`                          | 空字符串    | ROTATE 模型文件路径；为空时加载 `models/rotate.onnx`            |
 
-</details>
-
 ### 请求地址
 
 [http://127.0.0.1:7788](http://127.0.0.1:7788)
@@ -30,7 +66,7 @@
 
 | 说明       | 接口              | 方法 | 参数                                                                             |
 | :--------- | :---------------- | :--- | :------------------------------------------------------------------------------- |
-| 目标检测   | `/captcha/detect` | POST | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                          |
+| 目标检测   | `/captcha/detect` | POST | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                      |
 | 文本验证码 | `/captcha/ocr`    | POST | type(必传): text / math<br>bg(必传)<br>range(text可选, math不传): 识别字符集范围 |
 | 旋转验证码 | `/captcha/rotate` | POST | type(必传): single/ nox / tiktok<br>bg(必传)<br>thumb(nox/tiktok 必传)           |
 | 滑动验证码 | `/captcha/slide`  | POST | type(必传): match / comparison<br>thumb(必传)<br>bg(必传)                        |
@@ -118,7 +154,7 @@ curl -X POST 'http://127.0.0.1:7788/mcp/messages?sessionId=xxx-xxx' \
 <details>
 <summary>展开查看请求示例</summary>
 
-#### 目标检测
+#### 目标
 
 ```bash
 curl -X POST 'http://127.0.0.1:7788/captcha/detect' -H 'Content-Type: multipart/form-data' \
