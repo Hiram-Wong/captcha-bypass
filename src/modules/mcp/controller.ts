@@ -33,7 +33,9 @@ export const mcpController = new Elysia({ name: 'mcp/controller' })
   .get('/mcp', ({ request }) => {
     const sessionId = crypto.randomUUID();
     const url = new URL(request.url);
-    const endpointUrl = `${url.origin}/mcp/messages?sessionId=${sessionId}`;
+    const proto = request.headers.get('x-forwarded-proto') ?? url.protocol.replace(':', '');
+    const host = request.headers.get('x-forwarded-host') ?? url.host;
+    const endpointUrl = `${proto}://${host}/mcp/messages?sessionId=${sessionId}`;
 
     let keepAliveTimer: Timer | undefined;
 
