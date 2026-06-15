@@ -1,4 +1,4 @@
-name: Build/release
+name: Release
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ permissions:
   contents: write
 
 jobs:
-  prepare:
+  meta:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.tag.outputs.tag }}
@@ -44,7 +44,7 @@ jobs:
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
   build:
-    needs: prepare
+    needs: meta
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -87,7 +87,7 @@ jobs:
 
       - name: Set version
         shell: bash
-        run: npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
+        run: npm version "${{ needs.meta.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Build binary
         shell: bash
@@ -100,14 +100,19 @@ jobs:
           path: dist/captcha-bypass-*
           retention-days: 3
 
+      - name: Upload models
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: models
+          path: models/
+          retention-days: 3
+
   release:
-    needs: [prepare, build]
+    needs: [meta, build]
     if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v6
-
       - name: Download binaries
         uses: actions/download-artifact@v4
         with:
@@ -115,8 +120,18 @@ jobs:
           path: dist/
           merge-multiple: true
 
-      - name: Copy models
-        run: cp -r models dist/models
+      - name: Download models
+        uses: actions/download-artifact@v4
+        with:
+          name: models
+          path: dist/
+
+      - name: Package models
+        shell: bash
+        run: |
+          cd dist
+          zip -r models.zip models/
+          rm -rf models/
 
       - name: List artifacts
         run: ls -lhR dist/
@@ -127,6 +142,8 @@ jobs:
           draft: true
           allowUpdates: true
           makeLatest: false
-          tag: ${{ needs.prepare.outputs.tag }}
-          artifacts: 'dist/*'
+          tag: ${{ needs.meta.outputs.tag }}
+          artifacts: |
+            dist/captcha-bypass-*
+            dist/models.zip
           token: ${{ secrets.GITHUB_TOKEN }}

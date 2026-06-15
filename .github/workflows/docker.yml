@@ -1,4 +1,4 @@
-name: Docker publish
+name: Docker
 
 on:
   workflow_dispatch:
@@ -16,14 +16,16 @@ permissions:
   packages: write
 
 jobs:
-  build-push:
+  meta:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.value }}
+      version: ${{ steps.tag.outputs.version }}
+      image: ${{ steps.info.outputs.image }}
+      package: ${{ steps.info.outputs.package }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Resolve metadata
-        id: meta
+      - name: Resolve tag
+        id: tag
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
@@ -31,12 +33,24 @@ jobs:
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
-          VERSION="${TAG#v}"
-          REPO_OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
-          IMAGE="ghcr.io/${REPO_OWNER}/captcha-bypass"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "value=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve image info
+        id: info
+        shell: bash
+        run: |
+          OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          PACKAGE="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
+          echo "image=ghcr.io/${OWNER}/${PACKAGE}" >> "$GITHUB_OUTPUT"
+          echo "package=$PACKAGE" >> "$GITHUB_OUTPUT"
+
+  build-push:
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -44,6 +58,32 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete existing package version (same tag)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          TAG="${{ needs.meta.outputs.tag }}"
+          PACKAGE="${{ needs.meta.outputs.package }}"
+          OWNER="${{ github.repository_owner }}"
+
+          OWNER_PREFIX="users"
+          if gh api "/orgs/${OWNER}" --silent 2>/dev/null; then
+            OWNER_PREFIX="orgs"
+          fi
+
+          VERSION_ID=$(gh api "/${OWNER_PREFIX}/${OWNER}/packages/container/${PACKAGE}/versions" \
+            --jq ".[] | select(.metadata.container.tags[] == \"${TAG}\") | .id" 2>/dev/null | head -1)
+
+          if [ -n "$VERSION_ID" ]; then
+            echo "→ Deleting existing version ${VERSION_ID} (tag: ${TAG})"
+            gh api --method DELETE \
+              "/${OWNER_PREFIX}/${OWNER}/packages/container/${PACKAGE}/versions/${VERSION_ID}" --silent
+            echo "→ Deleted."
+          else
+            echo "→ No existing version for tag ${TAG}, proceeding."
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -59,11 +99,11 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
-            ${{ steps.meta.outputs.image }}:latest
+            ${{ needs.meta.outputs.image }}:${{ needs.meta.outputs.tag }}
+            ${{ needs.meta.outputs.image }}:latest
           labels: |
-            org.opencontainers.image.title=captcha-bypass
-            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.title=${{ needs.meta.outputs.package }}
+            org.opencontainers.image.version=${{ needs.meta.outputs.version }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
