@@ -130,8 +130,10 @@ jobs:
         shell: bash
         run: |
           cd dist
+          mkdir -p models
+          mv *.onnx *.json models/ 2>/dev/null || true
           zip -r models.zip models/
-          rm -rf models/
+          rm -rf *.onnx *.json models/
 
       - name: List artifacts
         run: ls -lhR dist/
