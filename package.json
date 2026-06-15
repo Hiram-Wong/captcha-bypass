@@ -1,9 +1,15 @@
 {
   "name": "captcha-bypass",
   "version": "1.0.6",
+  "private": true,
+  "description": "Captcha bypass service using OCR technology.",
   "type": "module",
-  "packageManager": "bun@1.3.14",
   "main": "dist/index.js",
+  "author": {
+    "name": "Hiram-Wong",
+    "email": "admin@catni.cn"
+  },
+  "license": "MIT",
   "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
   "scripts": {
     "format": "bunx prettier --write src scripts",
@@ -27,11 +33,12 @@
     "@techstark/opencv-js": "^4.12.0-release.1",
     "dotenv": "^17.4.2",
     "elysia": "^1.4.28",
-    "jimp": "^1.6.0",
+    "jimp": "^1.6.1",
     "onnxruntime-web": "^1.26.0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "bun@1.3.14"
 }

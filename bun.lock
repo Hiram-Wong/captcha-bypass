@@ -10,7 +10,7 @@
         "@techstark/opencv-js": "^4.12.0-release.1",
         "dotenv": "^17.4.2",
         "elysia": "^1.4.28",
-        "jimp": "^1.6.0",
+        "jimp": "^1.6.1",
         "onnxruntime-web": "^1.26.0",
       },
       "devDependencies": {

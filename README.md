@@ -128,8 +128,6 @@ curl -X POST 'http://127.0.0.1:7788/mcp' \
   }'
 ```
 
-> 调用结果通过步骤1的SSE连接返回: event: message → data: { result: ... }
-
 </details>
 
 <details>
