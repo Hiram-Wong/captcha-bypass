@@ -11,7 +11,7 @@ import { config } from '@/config';
 import { captchaController } from '@/modules/captcha';
 import { mcpController } from '@/modules/mcp';
 import { healthController } from '@/modules/health';
-import { isJson5Str } from '@/utils/validate';
+import { isJsonStr } from '@/utils/validate';
 import consoleUtils from '@/utils/console';
 
 process.on('uncaughtException', (err) => {
@@ -44,7 +44,7 @@ const setupServer = async (): Promise<void> => {
       if (code === 'VALIDATION') {
         const msg =
           error instanceof Error
-            ? isJson5Str(error.message)
+            ? isJsonStr(error.message)
               ? ((JSON5.parse(error.message) as { summary?: string }).summary ?? '请求参数校验失败')
               : error.message
             : '请求参数校验失败';

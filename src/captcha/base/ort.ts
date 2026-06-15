@@ -5,7 +5,7 @@ import { InferenceSession, Tensor, env as ortEnv } from 'onnxruntime-web';
 
 import { ROOT_PATH } from '@/utils/path';
 import { isPackaged } from '@/utils/systeminfo';
-import { isJson5Str } from '@/utils/validate';
+import { isJsonStr } from '@/utils/validate';
 
 import wasmBin from '../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm' with { type: 'file' };
 import mjsBin from '../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs' with { type: 'file' };
@@ -106,12 +106,12 @@ export class BaseOrtservice {
     if (!input) throw new Error('Charset is empty');
 
     let charset: string[] = [];
-    if (isJson5Str(input)) {
+    if (isJsonStr(input)) {
       const raw = JSON5.parse(input);
       if (!Array.isArray(raw)) throw new Error('Invalid charset format');
       charset = raw;
     } else {
-      charset = input.split('');
+      charset = (input as string).split('');
     }
 
     if (!charset.length) throw new Error('Charset is empty');

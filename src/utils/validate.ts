@@ -1,6 +1,6 @@
 import { JSON5 } from 'bun';
 
-import type { UploadedImage } from '@/types/shared';
+import type { JsonRpcV2, UploadedImage } from '@/types/shared';
 
 /**
  * 检查是否为 HTTP(S) 链接
@@ -14,7 +14,7 @@ export const isImageMime = (str: unknown): str is string =>
   typeof str === 'string' && str.toLowerCase().startsWith('image/');
 
 /**
- * 检查是否为合法的 Node.js 文件缓冲区对象
+ * 检查是否为 Node.js 文件缓冲区对象
  */
 export const isBufferedFile = (obj: unknown): obj is UploadedImage => {
   if (typeof obj !== 'object' || obj === null) return false;
@@ -31,15 +31,33 @@ export const isWebFile = (obj: unknown): obj is File => {
 };
 
 /**
- * 检查是否为合法的 JSON5 字符串
+ * 检查是否为 JSON 对象
  */
-export const isJson5Str = (str: unknown): boolean => {
+export function isJson(obj: unknown): obj is object {
+  return typeof obj === 'object' && obj !== null;
+}
+
+/**
+ * 检查是否为 JSON 字符串
+ */
+export const isJsonStr = (str: unknown): str is string => {
   if (typeof str !== 'string') return false;
 
   try {
-    JSON5.parse(str);
+    const resp = JSON5.parse(str);
+    if (!isJson(resp)) return false;
     return true;
   } catch {
     return false;
   }
+};
+
+/**
+ * 检查是否为 JSON-RPC 2.0 请求对象
+ */
+export const isJsonRpcV2 = (msg: unknown): msg is JsonRpcV2 => {
+  if (!isJson(msg)) return false;
+  if (!('jsonrpc' in msg) || (msg as JsonRpcV2).jsonrpc !== '2.0') return false;
+  if (!('method' in msg)) return false;
+  return true;
 };
