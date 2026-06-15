@@ -59,32 +59,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Delete existing package version (same tag)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          TAG="${{ needs.meta.outputs.tag }}"
-          PACKAGE="${{ needs.meta.outputs.package }}"
-          OWNER="${{ github.repository_owner }}"
-
-          OWNER_PREFIX="users"
-          if gh api "/orgs/${OWNER}" --silent 2>/dev/null; then
-            OWNER_PREFIX="orgs"
-          fi
-
-          VERSION_ID=$(gh api "/${OWNER_PREFIX}/${OWNER}/packages/container/${PACKAGE}/versions" \
-            --jq ".[] | select(.metadata.container.tags[] == \"${TAG}\") | .id" 2>/dev/null | head -1)
-
-          if [ -n "$VERSION_ID" ]; then
-            echo "→ Deleting existing version ${VERSION_ID} (tag: ${TAG})"
-            gh api --method DELETE \
-              "/${OWNER_PREFIX}/${OWNER}/packages/container/${PACKAGE}/versions/${VERSION_ID}" --silent
-            echo "→ Deleted."
-          else
-            echo "→ No existing version for tag ${TAG}, proceeding."
-          fi
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
