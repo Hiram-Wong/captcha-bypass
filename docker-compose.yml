@@ -10,6 +10,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
     volumes:
+      - ./data/logs:/app/logs
       - ./data/models:/app/models
       - ./data/.env:/app/.env
     restart: always
