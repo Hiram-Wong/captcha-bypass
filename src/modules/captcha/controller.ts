@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 
-import { authMW } from '@/middleware/auth';
+import { auth } from '@/middleware/auth';
 import {
   ocrCaptchaSchema,
   rotateCaptchaSchema,
@@ -16,7 +16,7 @@ import { fail, success } from '@/utils/response';
 
 export const captchaController = new Elysia({ name: 'captcha' }).group('/captcha', (app) =>
   app
-    .use(authMW.middleware())
+    .use(auth())
     .post(
       '/detect',
       async ({ body }) => {
