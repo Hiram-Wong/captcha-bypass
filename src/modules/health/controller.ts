@@ -4,7 +4,7 @@ import { healthResponseSchema } from './model';
 import { getHealth } from './service';
 import { fail, success } from '@/utils/response';
 
-export const healthController = new Elysia({ name: 'health/controller' }).get(
+export const healthController = new Elysia({ name: 'health' }).get(
   '/health',
   () => {
     try {

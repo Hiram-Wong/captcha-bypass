@@ -14,10 +14,10 @@ import {
 import { solveOcrCaptcha, solveRotateCaptcha, solveSlideCaptcha, solveDetectionCaptcha } from './service';
 import { fail, success } from '@/utils/response';
 
-export const captchaController = new Elysia({ name: 'captcha/controller' })
+export const captchaController = new Elysia({ name: 'captcha', prefix: '/captcha' })
   .use(authMW.middleware())
   .post(
-    '/captcha/detect',
+    '/detect',
     async ({ body }) => {
       try {
         const data = await solveDetectionCaptcha(body);
@@ -33,7 +33,7 @@ export const captchaController = new Elysia({ name: 'captcha/controller' })
     },
   )
   .post(
-    '/captcha/ocr',
+    '/ocr',
     async ({ body }) => {
       try {
         const data = await solveOcrCaptcha(body);
@@ -49,7 +49,7 @@ export const captchaController = new Elysia({ name: 'captcha/controller' })
     },
   )
   .post(
-    '/captcha/rotate',
+    '/rotate',
     async ({ body }) => {
       try {
         const data = await solveRotateCaptcha(body);
@@ -65,7 +65,7 @@ export const captchaController = new Elysia({ name: 'captcha/controller' })
     },
   )
   .post(
-    '/captcha/slide',
+    '/slide',
     async ({ body }) => {
       try {
         const data = await solveSlideCaptcha(body);
