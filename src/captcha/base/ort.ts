@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import { InferenceSession, Tensor, env as ortEnv } from 'onnxruntime-web';
 
 import { ROOT_PATH } from '@/utils/path';
-import { isPackaged } from '@/utils/systeminfo';
+import { isPackaged } from '@/utils/systemInfo';
 import { isJsonStr } from '@/utils/validate';
 
 import wasmBin from '../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm' with { type: 'file' };

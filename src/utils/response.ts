@@ -8,8 +8,8 @@ export const schema = <T extends TSchema>(data: T) =>
 
 export const success = <T>(data: T, message: string = 'success') => {
   return { code: 0 as const, msg: message, data };
-}
+};
 
 export const fail = (message: string) => {
   return { code: -1 as const, msg: message, data: null };
-}
+};
