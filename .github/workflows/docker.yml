@@ -23,7 +23,11 @@ jobs:
       version: ${{ steps.tag.outputs.version }}
       image: ${{ steps.info.outputs.image }}
       package: ${{ steps.info.outputs.package }}
+      description: ${{ steps.info.outputs.description }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Resolve tag
         id: tag
         shell: bash
@@ -42,8 +46,10 @@ jobs:
         run: |
           OWNER="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
           PACKAGE="$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')"
+          DESC="$(jq -r '.description' package.json)"
           echo "image=ghcr.io/${OWNER}/${PACKAGE}" >> "$GITHUB_OUTPUT"
           echo "package=$PACKAGE" >> "$GITHUB_OUTPUT"
+          echo "description=$DESC" >> "$GITHUB_OUTPUT"
 
   build-push:
     needs: meta
@@ -72,11 +78,13 @@ jobs:
           file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
+          provenance: false
           tags: |
             ${{ needs.meta.outputs.image }}:${{ needs.meta.outputs.tag }}
             ${{ needs.meta.outputs.image }}:latest
           labels: |
             org.opencontainers.image.title=${{ needs.meta.outputs.package }}
+            org.opencontainers.image.description=${{ needs.meta.outputs.description }}
             org.opencontainers.image.version=${{ needs.meta.outputs.version }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           cache-from: type=gha
