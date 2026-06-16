@@ -61,8 +61,7 @@ class RotateOrtCaptchaService extends BaseOrtservice {
     const cropY = Math.floor((rawHeight - outputSize) / 2);
     image.crop({ x: cropX, y: cropY, w: outputSize, h: outputSize });
 
-    // 缩放
-    image.resize({ w: TARGET_WIDTH, h: TARGET_HEIGHT });
+    image.resize({ w: TARGET_WIDTH, h: TARGET_HEIGHT }); // 缩放
 
     const { data, width, height } = image.bitmap;
     const channelSize = width * height;

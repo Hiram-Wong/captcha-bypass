@@ -62,6 +62,8 @@ export class OcrCaptchaService extends BaseOrtservice {
     size: { height: number; width: number };
     rawSize: { height: number; width: number };
   }> {
+    const MEAN = 0.5; // [0.485, 0.456, 0.406];
+    const STD = 0.5; // [0.229, 0.224, 0.225];
     const TARGET_SIZE = [0, 64];
     const [_TARGET_WIDTH, TARGET_HEIGHT] = TARGET_SIZE;
 
@@ -72,14 +74,19 @@ export class OcrCaptchaService extends BaseOrtservice {
     const newHeight = TARGET_HEIGHT;
 
     image.resize({ w: newWidth, h: newHeight }); // 缩放
-    image.greyscale(); // gray
+    image.greyscale(); // sRGB gamma-corrected 优于 luminance
 
     const { data, width, height } = image.bitmap;
     const channelSize = width * height;
     const floatData = new Float32Array(channelSize);
 
     for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      floatData[j] = (data[i] / 255.0 - 0.5) / 0.5;
+      floatData[j] = (data[i] / 255.0 - MEAN) / STD; // ddddocr 1.6.1
+
+      // 1.5.5
+      // floatData[j] = (data[i] / 255.0 - MEAN[0]) / STD[0];
+      // floatData[channelSize + j] = (data[i + 1] / 255.0 - MEAN[1]) / STD[1];
+      // floatData[2 * channelSize + j] = (data[i + 2] / 255.0 - MEAN[2]) / STD[2];
     }
 
     return {
@@ -100,7 +107,7 @@ export class OcrCaptchaService extends BaseOrtservice {
     // CTC 解码
     const ctcDecode = this.ctcGreedyDecode(output, vocab, { blankIndex: 0 });
     const text = typeof ctcDecode === 'string' ? ctcDecode : ctcDecode[0];
-    // console.debug(`text ctc decode: ${text}`);
+    console.debug(`text ctc decode: ${text}`);
 
     // 后置过滤（priority: range 参数 > 全局 charsetRanges 配置 > 无过滤）
     const allowedSet = (() => {
