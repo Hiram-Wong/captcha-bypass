@@ -40,7 +40,7 @@ Recognize text-based or arithmetic CAPTCHA images.
 | ------- | ------------------ | -------- | --------------------------------------------------------------------- |
 | `type`  | `"text" \| "math"` | Yes      | `text` for text captcha, `math` for arithmetic captcha                |
 | `bg`    | `string \| File`   | Yes      | Image input: Base64 string, HTTP(S) URL, or uploaded file (multipart) |
-| `range` | `string`           | No       | Character set filter (text type only), e.g. `"0123456789"`            |
+| `range` | `string`           | No       | Character set filter. Narrows recognition to specific characters, e.g. `"0123456789"` for digits, `"0123456789+-*/"` for math. Works for both `text` and `math` types. |
 
 **Response:**
 
@@ -63,10 +63,10 @@ curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -H 'Content-Type: application/json' \
   -d '{"type":"text","bg":"https://example.com/captcha.png","range":"0123456789"}'
 
-# Math captcha
+# Math captcha with range filter (improves accuracy by narrowing decoder charset)
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -H 'Content-Type: application/json' \
-  -d '{"type":"math","bg":"data:image/png;base64,iVBORw0KGgo..."}'
+  -d '{"type":"math","bg":"data:image/png;base64,iVBORw0KGgo...","range":"0123456789+-*/"}'
 
 # File upload (multipart)
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \

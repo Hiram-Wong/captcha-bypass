@@ -105,7 +105,7 @@ const TOOLS = [
         },
         range: {
           type: 'string',
-          description: "Optional character filter range, e.g. '0123456789' to only recognize digits",
+          description: "Optional character set filter, e.g. '0123456789' to only recognize digits, '0123456789+-*/' for math captcha.",
         },
       },
       required: ['type', 'image'],

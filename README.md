@@ -67,7 +67,7 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 | 说明       | 接口              | 方法 | 参数                                                                             |
 | :--------- | :---------------- | :--- | :------------------------------------------------------------------------------- |
 | 目标检测   | `/captcha/detect` | POST | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                      |
-| 文本验证码 | `/captcha/ocr`    | POST | type(必传): text / math<br>bg(必传)<br>range(text可选, math不传): 识别字符集范围 |
+| 文本验证码 | `/captcha/ocr`    | POST | type(必传): text / math<br>bg(必传)<br>range(可选): 识别字符集范围 |
 | 旋转验证码 | `/captcha/rotate` | POST | type(必传): single/ nox / tiktok<br>bg(必传)<br>thumb(nox/tiktok 必传)           |
 | 滑动验证码 | `/captcha/slide`  | POST | type(必传): match / comparison<br>thumb(必传)<br>bg(必传)                        |
 | 健康检查   | `/health`         | GET  |                                                                                  |

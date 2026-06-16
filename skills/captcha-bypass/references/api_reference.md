@@ -50,7 +50,7 @@ Recognize text-based or arithmetic CAPTCHA images.
 | ------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`  | `"text"` \| `"math"` | Yes      | CAPTCHA type                                                                                                                                                                    |
 | `bg`    | string \| File       | Yes      | Image as Base64, URL, or uploaded file                                                                                                                                          |
-| `range` | string               | No       | Character filter for text type. Each character in this string is treated as an allowed character; results are filtered to only contain these characters. Ignored for math type. |
+| `range` | string               | No       | Character set filter. Narrows recognition to the specified characters only. Works for both `text` and `math` types. Example: `"0123456789"` for digits, `"0123456789+-*/"` for math expressions. |
 
 **Success response (200):**
 
