@@ -82,10 +82,10 @@ jobs:
           tags: |
             ${{ needs.meta.outputs.image }}:${{ needs.meta.outputs.tag }}
             ${{ needs.meta.outputs.image }}:latest
-          labels: |
-            org.opencontainers.image.title=${{ needs.meta.outputs.package }}
-            org.opencontainers.image.description=${{ needs.meta.outputs.description }}
-            org.opencontainers.image.version=${{ needs.meta.outputs.version }}
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          annotations: |
+            index:org.opencontainers.image.title=${{ needs.meta.outputs.package }}
+            index:org.opencontainers.image.description=${{ needs.meta.outputs.description }}
+            index:org.opencontainers.image.version=${{ needs.meta.outputs.version }}
+            index:org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
