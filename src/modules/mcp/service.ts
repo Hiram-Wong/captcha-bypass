@@ -4,6 +4,7 @@ import {
   solveSlideCaptcha,
   solveDetectionCaptcha,
 } from '@/modules/captcha/service';
+import { APP_VERSION } from '@/utils/appInfo'
 import { isJsonRpcV2 } from '@/utils/validate';
 
 // ── JSON-RPC 2.0 errors ──
@@ -81,7 +82,7 @@ export const rpc = {
 
 const SERVER_INFO = {
   name: 'captcha-bypass',
-  version: '1.0.6',
+  version: APP_VERSION,
 };
 
 // ── tool definitions ──

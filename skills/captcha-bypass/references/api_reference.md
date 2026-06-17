@@ -32,8 +32,8 @@ No authentication required. Returns service health and version.
 {
   "status": 0,
   "data": {
-    "version": "1.0.6",
-    "timestamp": 1717200000000
+    "version": "1.0.7",
+    "timestamp": 1781719500449
   },
   "msg": "success"
 }
