@@ -79,9 +79,8 @@ class OcrAiCaptchaService extends AiCaptchaService {
       ...'零一二三四五六七八九',
       ...'〇壹贰叁肆伍陆柒捌玖',
       ...'加减乘除等',
-      ...'+-*x÷/=?',
-
-      ...'﹢⁺₊–—−﹣⁻₋✕✖×ⅩⅹxX÷⁄∕＝﹦≈',
+      ...'+-_*x÷/=?',
+      ...'﹢⁺₊–—−﹣⁻₋_ˍ‾✕✖×ⅩⅹxX÷⁄∕＝﹦≈',
     ]);
     const limit = ranges && ranges.size > 0 ? ranges : defaultRanges;
 
