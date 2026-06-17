@@ -1,6 +1,6 @@
 {
   "name": "captcha-bypass",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "description": "Captcha bypass service using OCR technology.",
   "type": "module",
@@ -14,6 +14,7 @@
   "scripts": {
     "format": "bunx prettier --write src scripts",
     "dev": "bun --watch src/index.ts",
+    "npmcheck": "ncu -u",
     "typecheck": "tsc --noEmit",
     "build": "bun scripts/build.js",
     "build:win": "bun scripts/build.js --platform win32",
@@ -28,16 +29,21 @@
     "generate:token": "bun run ./scripts/generate-token.js"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^2.0.51",
     "@elysia/cors": "^1.4.2",
     "@elysia/openapi": "^1.4.15",
     "@techstark/opencv-js": "^4.12.0-release.1",
+    "ai": "^6.0.207",
     "dotenv": "^17.4.2",
-    "elysia": "^1.4.28",
+    "nanoid": "^5.1.11",
+    "elysia": "^1.4.29",
     "jimp": "^1.6.1",
-    "onnxruntime-web": "^1.26.0"
+    "onnxruntime-web": "^1.26.0",
+    "rotating-file-stream": "^3.2.9"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
+    "npm-check-updates": "^22.2.3",
     "typescript": "^5.9.3"
   },
   "packageManager": "bun@1.3.14"
