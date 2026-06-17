@@ -29,26 +29,26 @@ export const solveDetectionCaptcha = async (input: DetectCaptchaInput): Promise<
       throw new Error('不支持的识别类型');
   }
 
-  console.debug(`[DETECTION][${type}] 检出 ${result.length} 个目标`);
+  console.info(`[DETECTION][${type}] 检出 ${result.length} 个目标`);
 
   return result;
 };
 
 export const solveOcrCaptcha = async (input: OcrCaptchaInput): Promise<OcrResult> => {
-  const { type, bg, range } = input;
+  const { type, action = 'onnx', bg, range } = input;
   const bgImgB64 = await toImageBase64(bg);
   const limit = range ? new Set(range.split('')) : undefined;
 
   let result;
   switch (type) {
     case 'math': {
-      result = await ocrCaptchaService.math(bgImgB64, limit);
-      console.debug(`[OCR][${type}] 识别结果: ${result.formula} = ${result.result}`);
+      result = await ocrCaptchaService.math(bgImgB64, action, limit);
+      console.info(`[OCR][${type}] 识别结果: ${result.formula} = ${result.result}`);
       break;
     }
     case 'text': {
-      result = await ocrCaptchaService.text(bgImgB64, limit);
-      console.debug(`[OCR][${type}] 识别结果: ${result.code}`);
+      result = await ocrCaptchaService.text(bgImgB64, action, limit);
+      console.info(`[OCR][${type}] 识别结果: ${result.code}`);
       break;
     }
     default:
@@ -82,7 +82,7 @@ export const solveRotateCaptcha = async (input: RotateCaptchaInput): Promise<Rot
       throw new Error('不支持的识别类型');
   }
 
-  console.debug(`[ROTATE][${type}] 识别结果: 顺时针-${result.cw}, 逆时针-${result.ccw}`);
+  console.info(`[ROTATE][${type}] 识别结果: 顺时针-${result.cw}, 逆时针-${result.ccw}`);
 
   return result;
 };
@@ -105,7 +105,7 @@ export const solveSlideCaptcha = async (input: SlideCaptchaInput): Promise<Slide
       throw new Error('不支持的识别类型');
   }
 
-  console.debug(`[SLIDE][${type}] 识别结果: x-${result.x}, y-${result.y}`);
+  console.info(`[SLIDE][${type}] 识别结果: x-${result.x}, y-${result.y}`);
 
   return result;
 };

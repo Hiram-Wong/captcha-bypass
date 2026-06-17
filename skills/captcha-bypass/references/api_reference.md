@@ -7,13 +7,17 @@
 | `PORT`               | number  | 7788        | Service port                                                    |
 | `OPENAPI_ENABLE`     | boolean | false       | Enable Swagger UI at `/docs`                                    |
 | `NODE_ENV`           | string  | development | `development`, or `production`                                  |
-| `AUTH_TYPE`          | 0\|1\|2 | 0           | 0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
-| `AUTH_KEY`           | string  | ""          | Auth key used when AUTH_TYPE=1 or 2                             |
-| `DETECT_MODEL_PATH`  | string  | ""          | Detect model path; defaults to `models/detect.onnx` if empty   |
-| `OCR_MODEL_PATH`     | string  | ""          | OCR model path; defaults to `models/ocr.onnx` if empty          |
-| `OCR_CHARSET_PATH`   | string  | ""          | OCR charset file path; defaults to `models/ocr.json` if empty   |
-| `OCR_CHARSET_RANGES` | string  | ""          | Global charset filter, e.g. `"0123456789"`                      |
-| `ROTATE_MODEL_PATH`  | string  | ""          | Rotate model path; defaults to `models/rotate.onnx` if empty    |
+| `AUTH_TYPE`          | 0\|1\|2 | 0           | Auth type<br>0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
+| `AUTH_KEY`           | string  | ""          | Auth key<br>Used when AUTH_TYPE=1 or 2                          |
+| `DETECT_MODEL_PATH`  | string  | ""          | Detect model path<br>Defaults to `models/detect.onnx` if empty  |
+| `OCR_MODEL_PATH`     | string  | ""          | OCR model path<br>Defaults to `models/ocr.onnx` if empty        |
+| `OCR_CHARSET_PATH`   | string  | ""          | OCR charset file path<br>Defaults to `models/ocr.json` if empty |
+| `OCR_CHARSET_RANGES` | string  | ""          | Global charset filter<br>e.g. `"0123456789"`                     |
+| `ROTATE_MODEL_PATH`  | string  | ""          | Rotate model path<br>Defaults to `models/rotate.onnx` if empty  |
+| `OPENAI_BASE_URL`    | string  | ""          | OpenAI API base URL<br>Only `/chat/completions` supported, must include version prefix (e.g. `/v1`) |
+| `OPENAI_API_KEY`     | string  | ""          | OpenAI API key                                                  |
+| `OPENAI_OCR_MODEL`   | string  | PaddleOCR-VL-1.6 | OCR-specific model name<br>Recommended: PaddleOCR(recommended), DeepSeek-OCR, HunyuanOCR |
+| `OPENAI_MODEL`       | string  | gpt-5.5     | General model name                                                |
 
 ## Endpoints
 
@@ -46,11 +50,12 @@ Recognize text-based or arithmetic CAPTCHA images.
 
 **Request schema:**
 
-| Field   | Type                 | Required | Description                                                                                                                                                                     |
-| ------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`  | `"text"` \| `"math"` | Yes      | CAPTCHA type                                                                                                                                                                    |
-| `bg`    | string \| File       | Yes      | Image as Base64, URL, or uploaded file                                                                                                                                          |
-| `range` | string               | No       | Character set filter. Narrows recognition to the specified characters only. Works for both `text` and `math` types. Example: `"0123456789"` for digits, `"0123456789+-*/"` for math expressions. |
+| Field    | Type                 | Required | Description                                                                                                                                                                     |
+| -------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`   | `"text"` \| `"math"` | Yes      | CAPTCHA type                                                                                                                                                                    |
+| `bg`     | string \| File       | Yes      | Image as Base64, URL, or uploaded file                                                                                                                                          |
+| `action` | `"ai"` \| `"onnx"`   | No       | Recognition engine: `onnx` uses local ONNX model (default, fast), `ai` uses LLM vision API for text extraction (higher accuracy for complex text captchas)                      |
+| `range`  | string               | No       | Character set filter. Narrows recognition to the specified characters only. Works for both `text` and `math` types. Example: `"0123456789"` for digits, `"0123456789+-*/"` for math expressions. |
 
 **Success response (200):**
 
@@ -98,16 +103,17 @@ Math type:
 # Text captcha via URL
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -H 'Content-Type: application/json' \
-  -d '{"type":"text","bg":"https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png","range":"0123456789"}'
+  -d '{"type":"text","action":"onnx","bg":"https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png","range":"0123456789"}'
 
 # Math captcha via Base64
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -H 'Content-Type: application/json' \
-  -d '{"type":"math","bg":"data:image/jpeg;base64,/9j/4AAQSkZJRg..."}'
+  -d '{"type":"math","action":"onnx","bg":"data:image/jpeg;base64,/9j/4AAQSkZJRg..."}'
 
 # Text captcha via file upload
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -F 'type=text' \
+  -F 'action=onnx' \
   -F 'bg=@captcha.png' \
   -F 'range=0123456789abcdef'
 ```
@@ -318,7 +324,7 @@ MCP (Model Context Protocol) Streamable HTTP endpoint for AI agent integration. 
 
 | Tool     | Description              | Key arguments                      |
 | -------- | ------------------------ | ---------------------------------- |
-| `ocr`    | Text/math OCR            | `type`, `image`, `range`(optional) |
+| `ocr`    | Text/math OCR            | `type`, `bg`, `action`(optional, default `onnx`), `range`(optional) |
 | `rotate` | Rotation angle detection | `type`, `bg`, `thumb`(optional)    |
 | `slide`  | Slider position matching | `type`, `thumb`, `bg`              |
 | `detect` | Object detection         | `type`, `bg`, `thumb`(optional)    |
@@ -339,7 +345,7 @@ curl -X POST 'http://127.0.0.1:7788/mcp' \
 # 3. Call OCR tool
 curl -X POST 'http://127.0.0.1:7788/mcp' \
   -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"ocr","arguments":{"type":"text","image":"https://example.com/captcha.png","range":"0123456789"}}}'
+  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"ocr","arguments":{"type":"text","bg":"https://example.com/captcha.png","action":"onnx","range":"0123456789"}}}'
 ```
 
 ---

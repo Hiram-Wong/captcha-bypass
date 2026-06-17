@@ -26,6 +26,10 @@ const envSchema = t.Object({
   OCR_CHARSET_PATH: t.String(),
   OCR_CHARSET_RANGES: t.String(),
   ROTATE_MODEL_PATH: t.String(),
+  OPENAI_BASE_URL: t.String(),
+  OPENAI_API_KEY: t.String(),
+  OPENAI_OCR_MODEL: t.String(),
+  OPENAI_MODEL: t.String(),
 });
 
 type Env = Static<typeof envSchema>;
@@ -34,13 +38,27 @@ const envDefaults = {
   PORT: 7788,
   OPENAPI_ENABLE: false,
   NODE_ENV: 'development',
+
+  // auth
   AUTH_KEY: '',
   AUTH_TYPE: 0,
+
+  // Detect
   DETECT_MODEL_PATH: '',
+
+  // OCR
   OCR_MODEL_PATH: '',
   OCR_CHARSET_PATH: '',
   OCR_CHARSET_RANGES: '',
+
+  // Rotate
   ROTATE_MODEL_PATH: '',
+
+  // OpenAI
+  OPENAI_BASE_URL: '',
+  OPENAI_API_KEY: '',
+  OPENAI_OCR_MODEL: '',
+  OPENAI_MODEL: '',
 } satisfies Env;
 
 const envValidator = TypeCompiler.Compile(envSchema);
@@ -85,6 +103,12 @@ export const config = {
   },
   detect: {
     modelPath: env.DETECT_MODEL_PATH || 'models/detect.onnx',
+  },
+  openai: {
+    baseURL: env.OPENAI_BASE_URL || '',
+    apiKey: env.OPENAI_API_KEY || '',
+    ocrModel: env.OPENAI_OCR_MODEL || 'PaddleOCR-VL-1.6',
+    model: env.OPENAI_MODEL || 'gpt-5.5',
   },
 } as const;
 

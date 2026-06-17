@@ -90,7 +90,7 @@ const TOOLS = [
   {
     name: 'ocr',
     description:
-      'Recognize text or math formula from captcha images. Supports both text OCR and math formula recognition.',
+      'Recognize text or math formula from captcha images. Use action parameter (optional, defaults to "onnx") to select engine: "onnx" (local ONNX model, fast) or "ai" (LLM vision API, higher accuracy for complex captchas).',
     inputSchema: {
       type: 'object',
       properties: {
@@ -99,16 +99,23 @@ const TOOLS = [
           enum: ['text', 'math'],
           description: "Recognition type: 'text' for character recognition, 'math' for math formula recognition",
         },
-        image: {
+        bg: {
           type: 'string',
           description: 'Image as base64 string (with or without data URI prefix) or image URL',
         },
+        action: {
+          type: 'string',
+          enum: ['ai', 'onnx'],
+          description:
+            "Recognition engine: 'onnx' uses local ONNX model (default, fast), 'ai' uses LLM vision API for text extraction (higher accuracy for complex captchas)",
+        },
         range: {
           type: 'string',
-          description: "Optional character set filter, e.g. '0123456789' to only recognize digits, '0123456789+-*/' for math captcha.",
+          description:
+            "Optional character set filter, e.g. '0123456789' to only recognize digits, '0123456789+-*/' for math captcha.",
         },
       },
-      required: ['type', 'image'],
+      required: ['type', 'bg'],
     },
   },
   {
@@ -149,13 +156,13 @@ const TOOLS = [
           enum: ['match', 'compare'],
           description: "Match type: 'match' for template matching (Canny + TM), 'compare' for difference comparison",
         },
-        thumb: {
-          type: 'string',
-          description: 'The slider/thumb image as base64 string or URL',
-        },
         bg: {
           type: 'string',
           description: 'The background image as base64 string or URL',
+        },
+        thumb: {
+          type: 'string',
+          description: 'The slider/thumb image as base64 string or URL',
         },
       },
       required: ['type', 'thumb', 'bg'],
@@ -202,12 +209,13 @@ async function handleToolCall(req: JsonRpcRequest): Promise<JsonRpcResponse> {
 
     switch (name) {
       case 'ocr': {
-        if (!args?.type || !args?.image) {
-          return rpc.error(req.id, McpError.missingParams('type, image'));
+        if (!args?.type || !args?.bg) {
+          return rpc.error(req.id, McpError.missingParams('type, bg'));
         }
         result = await solveOcrCaptcha({
           type: args.type as 'text' | 'math',
-          bg: args.image,
+          bg: args.bg,
+          action: args.action as 'ai' | 'onnx',
           range: args.range,
         });
         break;

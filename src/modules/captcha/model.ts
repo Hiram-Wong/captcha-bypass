@@ -13,6 +13,7 @@ export const detectCaptchaSchema = t.Object({
 
 export const ocrCaptchaSchema = t.Object({
   type: t.Enum({ text: 'text', math: 'math' }),
+  action: t.Optional(t.Enum({ ai: 'ai', onnx: 'onnx' }, { default: 'onnx' })),
   bg: ImageInput,
   range: t.Optional(t.String()),
 });

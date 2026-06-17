@@ -23,7 +23,10 @@ export const toImageBase64 = async (data: ImageInput): Promise<string> => {
 
   // URL
   if (isHttp(data)) {
-    const res = await fetch(data, { signal: AbortSignal.timeout(10000) });
+    const res = await fetch(data, {
+      signal: AbortSignal.timeout(30_000),
+    });
+
     if (!res.ok) {
       throw new Error('无法访问图片链接');
     }
@@ -47,4 +50,40 @@ export const toImageBase64 = async (data: ImageInput): Promise<string> => {
   }
 
   return data;
+};
+
+export const toMath = (data: string): string => {
+  // prettier-ignore
+  const map: Record<string, string> = {
+    // 数字
+    '零': '0', '〇': '0',
+    '一': '1', '壹': '1', '①': '1',
+    '二': '2', '贰': '2', '②': '2',
+    '三': '3', '叁': '3', '③': '3',
+    '四': '4', '肆': '4', '④': '4',
+    '五': '5', '伍': '5', '⑤': '5',
+    '六': '6', '陆': '6', '⑥': '6',
+    '七': '7', '柒': '7', '⑦': '7',
+    '八': '8', '捌': '8', '⑧': '8',
+    '九': '9', '玖': '9', '⑨': '9',
+
+    // 运算符
+    '加': '+', '﹢': '+', '⁺': '+', '₊': '+',
+    '减': '-', '–': '-', '—': '-', '−': '-', '﹣': '-', '⁻': '-', '₋': '-',
+    '乘': '*', '✕': '*', '✖': '*', '×': '*', 'Ⅹ': '*', 'ⅹ': '*', 'x': '*', 'X': '*', 
+    '除': '/', '÷': '/', '⁄': '/', '∕': '/',
+    '等': '=', '＝': '=', '﹦': '=', '≈': '=',
+
+    // 其他
+    // '（': '(', '）': ')'
+  };
+
+  return data
+    .normalize('NFKC') // 规范化字符
+    .replace(/./g, (ch) => map[ch] ?? ch)
+    .replace(/(\d)\s+(?=\d)/g, '$1')
+    .replace(/\s+/g, '')
+    .replace(/=+$/, '')
+    .split('=')[0]
+    .replace(/[^\d+\-*/.=]/g, '');
 };

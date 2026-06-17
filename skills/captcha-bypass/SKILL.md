@@ -36,11 +36,12 @@ Recognize text-based or arithmetic CAPTCHA images.
 
 **Request body (JSON):**
 
-| Field   | Type               | Required | Description                                                           |
-| ------- | ------------------ | -------- | --------------------------------------------------------------------- |
-| `type`  | `"text" \| "math"` | Yes      | `text` for text captcha, `math` for arithmetic captcha                |
-| `bg`    | `string \| File`   | Yes      | Image input: Base64 string, HTTP(S) URL, or uploaded file (multipart) |
-| `range` | `string`           | No       | Character set filter. Narrows recognition to specific characters, e.g. `"0123456789"` for digits, `"0123456789+-*/"` for math. Works for both `text` and `math` types. |
+| Field    | Type               | Required | Description                                                           |
+| -------- | ------------------ | -------- | --------------------------------------------------------------------- |
+| `type`   | `"text" \| "math"` | Yes      | `text` for text captcha, `math` for arithmetic captcha                |
+| `bg`     | `string \| File`   | Yes      | Image input: Base64 string, HTTP(S) URL, or uploaded file (multipart) |
+| `action` | `"ai" \| "onnx"`   | No       | Recognition engine: `onnx` uses local ONNX model (default), `ai` uses LLM vision API for text extraction |
+| `range`  | `string`           | No       | Character set filter. Narrows recognition to specific characters, e.g. `"0123456789"` for digits, `"0123456789+-*/"` for math. Works for both `text` and `math` types. |
 
 **Response:**
 
@@ -61,16 +62,17 @@ Recognize text-based or arithmetic CAPTCHA images.
 # Text captcha with character filter
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -H 'Content-Type: application/json' \
-  -d '{"type":"text","bg":"https://example.com/captcha.png","range":"0123456789"}'
+  -d '{"type":"text","action":"onnx","bg":"https://example.com/captcha.png","range":"0123456789"}'
 
 # Math captcha with range filter (improves accuracy by narrowing decoder charset)
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -H 'Content-Type: application/json' \
-  -d '{"type":"math","bg":"data:image/png;base64,iVBORw0KGgo...","range":"0123456789+-*/"}'
+  -d '{"type":"math","action":"onnx","bg":"data:image/png;base64,iVBORw0KGgo...","range":"0123456789+-*/"}'
 
 # File upload (multipart)
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -F 'type=text' \
+  -F 'action=onnx' \
   -F 'bg=@captcha.png' \
   -F 'range=0123456789'
 ```
@@ -196,7 +198,7 @@ curl -X POST 'http://127.0.0.1:7788/mcp' \
 # 2. Call a tool — response returned directly in HTTP body
 curl -X POST 'http://127.0.0.1:7788/mcp' \
   -H 'Content-Type: application/json' \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"ocr","arguments":{"type":"text","image":"https://example.com/captcha.png","range":"0123456789"}}}'
+  -d '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"ocr","arguments":{"type":"text","bg":"https://example.com/captcha.png","action":"onnx","range":"0123456789"}}}'
 # → {"jsonrpc":"2.0","id":2,"result":{"content":[{"type":"text","text":"..."}]}}
 ```
 

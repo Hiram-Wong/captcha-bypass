@@ -1,12 +1,15 @@
 import fs from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import type { ModelMessage } from 'ai';
 import { Jimp } from 'jimp';
 import { Tensor } from 'onnxruntime-web';
 
 import { config } from '@/config';
+import { toMath } from '@/utils/format';
 import { ROOT_PATH } from '@/utils/path';
 
+import { AiCaptchaService } from './base/ai';
 import { BaseOrtservice } from './base/ort';
 
 interface MathResult {
@@ -20,15 +23,99 @@ interface TextResult {
 
 export type OcrResult = MathResult | TextResult;
 
-export class OcrCaptchaService extends BaseOrtservice {
-  private static instance: OcrCaptchaService | null = null;
+class OcrAiCaptchaService extends AiCaptchaService {
+  private static instance: OcrAiCaptchaService | null = null;
+
+  public static getInstance(): OcrAiCaptchaService {
+    if (!OcrAiCaptchaService.instance) {
+      OcrAiCaptchaService.instance = new OcrAiCaptchaService();
+    }
+    return OcrAiCaptchaService.instance;
+  }
+
+  private buildMessages(bgBase64: string): ModelMessage[] {
+    return [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: '提取文字' },
+          { type: 'image', image: bgBase64 },
+        ],
+      },
+    ];
+  }
+
+  private get options() {
+    return {
+      apiKey: config.openai.apiKey,
+      baseURL: config.openai.baseURL,
+      model: config.openai.ocrModel,
+    };
+  }
+
+  public async text(bgBase64: string, ranges?: Set<string>): Promise<TextResult> {
+    const messages = this.buildMessages(bgBase64);
+    const options = this.options;
+
+    const text = await this.chatText(messages, options);
+    console.debug(`[OCR][AI] raw completion: ${text}`);
+
+    let result = text?.trim();
+    // 后置过滤
+    if (ranges && ranges.size > 0) {
+      result = result
+        .normalize('NFKC')
+        .split('')
+        .filter((char) => ranges.has(char))
+        .join('');
+    }
+    return { code: result };
+  }
+
+  public async math(bgBase64: string, ranges?: Set<string>): Promise<{ formula: string; result: number }> {
+    const defaultRanges = new Set([
+      ...'0123456789',
+      ...'①②③④⑤⑥⑦⑧⑨',
+      ...'零一二三四五六七八九',
+      ...'〇壹贰叁肆伍陆柒捌玖',
+      ...'加减乘除等',
+      ...'+-*x÷/=?',
+
+      ...'﹢⁺₊–—−﹣⁻₋✕✖×ⅩⅹxX÷⁄∕＝﹦≈',
+    ]);
+    const limit = ranges && ranges.size > 0 ? ranges : defaultRanges;
+
+    const { code } = await this.text(bgBase64, limit);
+
+    const formula = toMath(code);
+    if (!formula) throw new Error('Formula expression error');
+
+    let result: unknown;
+    try {
+      result = Function(`"use strict"; return (${formula})`)();
+
+      if (typeof result !== 'number' || Number.isNaN(result)) {
+        throw new Error('Invalid formula expression result');
+      }
+    } catch {
+      throw new Error('Invalid formula expression');
+    }
+
+    return { formula, result };
+  }
+}
+
+const ocrAiCaptchaService = OcrAiCaptchaService.getInstance();
+
+class OcrOrtCaptchaService extends BaseOrtservice {
+  private static instance: OcrOrtCaptchaService | null = null;
   private charsetRanges: Set<string> = new Set<string>();
 
-  public static getInstance(): OcrCaptchaService {
-    if (!OcrCaptchaService.instance) {
-      OcrCaptchaService.instance = new OcrCaptchaService();
+  public static getInstance(): OcrOrtCaptchaService {
+    if (!OcrOrtCaptchaService.instance) {
+      OcrOrtCaptchaService.instance = new OcrOrtCaptchaService();
     }
-    return OcrCaptchaService.instance;
+    return OcrOrtCaptchaService.instance;
   }
 
   public async init(): Promise<void> {
@@ -123,7 +210,7 @@ export class OcrCaptchaService extends BaseOrtservice {
     // CTC 解码（限制在 allowedIndices 范围内 argmax）
     const ctcDecode = this.ctcGreedyDecode(output, vocab, { blankIndex: 0, allowedIndices });
     const text = typeof ctcDecode === 'string' ? ctcDecode : ctcDecode[0];
-    console.debug(`text ctc decode: ${text}`);
+    console.debug(`[OCR][ONNX] raw ctc decode: ${text}`);
 
     return { code: text };
   }
@@ -141,46 +228,60 @@ export class OcrCaptchaService extends BaseOrtservice {
 
     const { code } = await this.text(bgBase64, limit);
 
-    // prettier-ignore
-    const formula = code
+    let formula = code
       .normalize('NFKC') // 规范化字符格式
-
       .replace(/27$/, '') // =? -> 27（识别错误率高）
-      .replace(/7$/, '') // ? -> 7（识别错误率高）
-
-      .replace(/[零〇]/g, '0')  
-      .replace(/[一壹①]/g, '1')
-      .replace(/[二贰②]/g, '2')
-      .replace(/[三叁③]/g, '3')
-      .replace(/[四肆④]/g, '4')
-      .replace(/[五伍⑤]/g, '5')
-      .replace(/[六陆⑥]/g, '6')
-      .replace(/[七柒⑦]/g, '7')
-      .replace(/[八捌⑧]/g, '8')
-      .replace(/[九玖⑨]/g, '9')
-
-      .replace(/[加]/g, '+')
-      .replace(/[减]/g, '-')
-      .replace(/[乘x]/g, '*')
-      .replace(/[除÷]/g, '/')
-
-      .replace(/[等=?]/g, '') // 删除不执行字符
-      .replace(/[^0-9+\-*/]/g, ''); // 允许数学表达式
-
+      .replace(/7$/, ''); // ? -> 7（识别错误率高）
+    formula = toMath(formula);
     if (!formula) throw new Error('Formula expression error');
 
     let result: unknown;
     try {
       result = Function(`"use strict"; return (${formula})`)();
+
+      if (typeof result !== 'number' || Number.isNaN(result)) {
+        throw new Error('Invalid formula expression result');
+      }
     } catch {
       throw new Error('Invalid formula expression');
     }
 
-    if (typeof result !== 'number' || Number.isNaN(result)) {
-      throw new Error('Invalid formula expression result');
-    }
-
     return { formula, result };
+  }
+}
+
+const ocrOrtCaptchaService = OcrOrtCaptchaService.getInstance();
+
+export class OcrCaptchaService {
+  private static instance: OcrCaptchaService | null = null;
+
+  public static getInstance(): OcrCaptchaService {
+    if (!OcrCaptchaService.instance) {
+      OcrCaptchaService.instance = new OcrCaptchaService();
+    }
+    return OcrCaptchaService.instance;
+  }
+
+  public async init(): Promise<void> {
+    await ocrOrtCaptchaService.init();
+  }
+
+  public async text(imgBase64: string, type: 'ai' | 'onnx', ranges?: Set<string>): Promise<TextResult> {
+    const handerMap = {
+      ai: () => ocrAiCaptchaService.text(imgBase64, ranges),
+      onnx: () => ocrOrtCaptchaService.text(imgBase64, ranges),
+    };
+    const result = await handerMap[type]?.();
+    return result;
+  }
+
+  public async math(imgBase64: string, type: 'ai' | 'onnx', ranges?: Set<string>): Promise<MathResult> {
+    const handerMap = {
+      ai: () => ocrAiCaptchaService.math(imgBase64, ranges),
+      onnx: () => ocrOrtCaptchaService.math(imgBase64, ranges),
+    };
+    const result = await handerMap[type]?.();
+    return result;
   }
 }
 

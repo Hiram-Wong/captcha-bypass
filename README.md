@@ -45,18 +45,22 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 
 ### 环境变量
 
-| 配置               | 类型                              | 默认值      | 说明                                                            |
-| :----------------- | :-------------------------------- | :---------- | :-------------------------------------------------------------- |
-| PORT               | `number`                          | 7788        | 服务端口                                                        |
-| OPENAPI_ENABLE     | `boolean`                         | false       | 是否启用 OpenAPI 文档                                           |
-| NODE_ENV           | `"development"` \| `"production"` | development | 运行环境                                                        |
-| AUTH_TYPE          | `0` \| `1` \| `2`                 | 0           | 0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)                  |
-| AUTH_KEY           | `string`                          | 空字符串    | 认证密钥，AUTH_TYPE=1/2 时使用                                  |
-| DETECT_MODEL_PATH  | `string`                          | 空字符串    | Detect 模型文件路径；为空时加载 `models/detect.onnx`            |
-| OCR_MODEL_PATH     | `string`                          | 空字符串    | OCR 模型文件路径；为空时加载 `models/ocr.onnx`                  |
-| OCR_CHARSET_PATH   | `string`                          | 空字符串    | OCR 字符集文件路径；为空时加载 `models/ocr.json`                |
-| OCR_CHARSET_RANGES | `string`                          | 空字符串    | OCR 字符集范围过滤，如 `"0123456789"`；按字符拆分后过滤识别结果 |
-| ROTATE_MODEL_PATH  | `string`                          | 空字符串    | ROTATE 模型文件路径；为空时加载 `models/rotate.onnx`            |
+| 配置               | 类型                              | 默认值           | 说明                                                                |
+| :----------------- | :-------------------------------- | :--------------- | :------------------------------------------------------------------ |
+| PORT               | `number`                          | 7788             | 服务端口                                                            |
+| OPENAPI_ENABLE     | `boolean`                         | false            | 是否启用 OpenAPI 文档                                               |
+| NODE_ENV           | `"development"` \| `"production"` | development      | 运行环境                                                            |
+| AUTH_TYPE          | `0` \| `1` \| `2`                 | 0                | 认证类型<br>0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)          |
+| AUTH_KEY           | `string`                          | 空字符串         | 认证密钥<br>AUTH_TYPE=1/2 时使用                                    |
+| DETECT_MODEL_PATH  | `string`                          | 空字符串         | Detect 模型文件路径<br>为空时加载 `models/detect.onnx`              |
+| OCR_MODEL_PATH     | `string`                          | 空字符串         | OCR 模型文件路径<br>为空时加载 `models/ocr.onnx`                    |
+| OCR_CHARSET_PATH   | `string`                          | 空字符串         | OCR 字符集文件路径<br>为空时加载 `models/ocr.json`                  |
+| OCR_CHARSET_RANGES | `string`                          | 空字符串         | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果   |
+| ROTATE_MODEL_PATH  | `string`                          | 空字符串         | ROTATE 模型文件路径<br>为空时加载 `models/rotate.onnx`              |
+| OPENAI_BASE_URL    | `string`                          | 空字符串         | OpenAI API 地址<br>仅支持 `/chat/completions`，需带版本号（如 `/v1`）|
+| OPENAI_API_KEY     | `string`                          | 空字符串         | OpenAI API 密钥                                                     |
+| OPENAI_OCR_MODEL   | `string`                          | PaddleOCR-VL-1.6 | OCR 专用模型名称<br>推荐：PaddleOCR(推荐)、HunyuanOCR、DeepSeek-OCR |
+| OPENAI_MODEL       | `string`                          | gpt-5.5          | 通用模型名称                                                        |
 
 ### 请求地址
 
@@ -64,71 +68,19 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 
 ### 接口简述
 
-| 说明       | 接口              | 方法 | 参数                                                                             |
-| :--------- | :---------------- | :--- | :------------------------------------------------------------------------------- |
-| 目标检测   | `/captcha/detect` | POST | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                      |
-| 文本验证码 | `/captcha/ocr`    | POST | type(必传): text / math<br>bg(必传)<br>range(可选): 识别字符集范围 |
-| 旋转验证码 | `/captcha/rotate` | POST | type(必传): single/ nox / tiktok<br>bg(必传)<br>thumb(nox/tiktok 必传)           |
-| 滑动验证码 | `/captcha/slide`  | POST | type(必传): match / comparison<br>thumb(必传)<br>bg(必传)                        |
-| 健康检查   | `/health`         | GET  |                                                                                  |
-| MCP 协议   | `/mcp`            | POST | Streamable HTTP 传输，body：JSON-RPC 2.0 消息（详见工具列表）                   |
+| 说明       | 接口              | 方法 | 参数                                                                                                     |
+| :--------- | :---------------- | :--- | :------------------------------------------------------------------------------------------------------- |
+| 目标检测   | `/captcha/detect` | POST | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                                              |
+| 文本验证码 | `/captcha/ocr`    | POST | type(必传): text / math<br>bg(必传)<br>action(可选, 默认 onnx): ai / onnx<br>range(可选): 识别字符集范围 |
+| 旋转验证码 | `/captcha/rotate` | POST | type(必传): single/ nox / tiktok<br>bg(必传)<br>thumb(nox/tiktok 必传)                                   |
+| 滑动验证码 | `/captcha/slide`  | POST | type(必传): match / comparison<br>thumb(必传)<br>bg(必传)                                                |
+| 健康检查   | `/health`         | GET  |                                                                                                          |
+| MCP 协议   | `/mcp`            | POST | Streamable HTTP 传输，body：JSON-RPC 2.0 消息（详见工具列表）                                            |
 
 ### 调用说明
 
 - JSON: Content-Type: application/json (传 Base64 或 URL)
-- Form: Content-Type: multipart/form-data (传 图片文件)
-
-<details>
-<summary>展开查看MCP调用</summary>
-
-MCP 端点遵循 [Model Context Protocol](https://modelcontextprotocol.io) 协议，使用 Streamable HTTP 传输 JSON-RPC 2.0 消息。所有请求发送到 `POST /mcp`，直接返回 JSON-RPC 响应。
-
-#### 1. 初始化
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/mcp' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2024-11-05",
-      "capabilities": {},
-      "clientInfo": { "name": "client", "version": "1.0" }
-    }
-  }'
-```
-
-#### 2. 获取工具列表
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/mcp' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 2,
-    "method": "tools/list"
-  }'
-```
-
-#### 3. 调用 OCR 识别
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/mcp' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 3,
-    "method": "tools/call",
-    "params": {
-      "name": "ocr",
-      "arguments": { "type": "text", "image": "https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png", "range":"0123456789" }
-    }
-  }'
-```
-
-</details>
+- FORM: Content-Type: multipart/form-data (传 图片文件)
 
 <details>
 <summary>展开查看常见问题</summary>
@@ -169,6 +121,7 @@ curl -X POST 'http://127.0.0.1:7788/captcha/detect' -H 'Content-Type: multipart/
 ```bash
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' -H 'Content-Type: application/json' -d '{
   "type": "text",
+  "action": "onnx",
   "bg": "https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png",
   "range": "0123456789"
 }' # {"status":0,"data":{"code":"0413"},"msg":"success"}
@@ -177,6 +130,7 @@ curl -X POST 'http://127.0.0.1:7788/captcha/ocr' -H 'Content-Type: application/j
 ```bash
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' -H 'Content-Type: application/json' -d '{
   "type": "math",
+  "action": "ai",
   "bg": "data:image/jpeg;base64,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"
 }' # {"status":0,"data":{"formula":"41*8","result":328},"msg":"success"}
 ```
@@ -226,6 +180,58 @@ curl -X POST 'http://127.0.0.1:7788/captcha/slide' -H 'Content-Type: application
 
 </details>
 
+<details>
+<summary>展开查看MCP调用</summary>
+
+MCP 端点遵循 [Model Context Protocol](https://modelcontextprotocol.io) 协议，使用 Streamable HTTP 传输 JSON-RPC 2.0 消息。所有请求发送到 `POST /mcp`，直接返回 JSON-RPC 响应。
+
+#### 1. 初始化
+
+```bash
+curl -X POST 'http://127.0.0.1:7788/mcp' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {},
+      "clientInfo": { "name": "client", "version": "1.0" }
+    }
+  }'
+```
+
+#### 2. 获取工具列表
+
+```bash
+curl -X POST 'http://127.0.0.1:7788/mcp' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 2,
+    "method": "tools/list"
+  }'
+```
+
+#### 3. 调用 OCR 识别
+
+```bash
+curl -X POST 'http://127.0.0.1:7788/mcp' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 3,
+    "method": "tools/call",
+    "params": {
+      "name": "ocr",
+      "arguments": { "type": "text", "bg": "https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png", "action": "onnx", "range":"0123456789" }
+    }
+  }'
+```
+
+</details>
+
 ## 🛠️ 开发
 
 > 安装[bun](https://bun.com/docs/installation)
@@ -237,7 +243,7 @@ bun run dev # 开发模式
 bun run build:{platform}:{arch} # 构建二进制, 如: bun run build:darwin:arm64
 ```
 
-## 📝 许可
+## 📄 许可
 
 > 本项目沿用原项目 [ddddocr](https://github.com/sml2h3/ddddocr) 的许可证 [MIT License](./LICENSE)
 
@@ -247,7 +253,7 @@ bun run build:{platform}:{arch} # 构建二进制, 如: bun run build:darwin:arm
 2. 风险自负: 任何因使用本项目而产生的法律责任、技术风险或经济损失，由使用者自行承担，项目作者不承担任何形式的责任。
 3. 禁止滥用: 不得将本项目用于违法牟利、黑产活动或其他不当商业用途。
 
-## 📄 鸣谢
+## 🙏 鸣谢
 
 - [onnxruntime-web](https://github.com/microsoft/onnxruntime-web) - 模型推理
 - [ddddocr](https://github.com/sml2h3/ddddocr) - 文字识别/对象识别/滑块算法
