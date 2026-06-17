@@ -1,9 +1,10 @@
-import { createWriteStream, mkdirSync, type WriteStream } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import process from 'node:process';
 
 import { Elysia } from 'elysia';
+import { customAlphabet } from 'nanoid';
+import { createStream, type Options as RotatingFileStreamOptions } from 'rotating-file-stream';
 
 import { ROOT_PATH } from '@/utils/path';
 
@@ -12,36 +13,21 @@ interface LoggerOptions {
   enabled?: boolean;
 }
 
-type LogType = 'access' | 'error';
-
 type RequestIpServer = {
   requestIP?: (request: Request) => { address?: string } | null;
 };
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
-const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-
-const nginxTime = (d: Date) => {
-  const offset = -d.getTimezoneOffset();
-  const sign = offset >= 0 ? '+' : '-';
-  const abs = Math.abs(offset);
-
-  const tz = `${sign}${pad(Math.floor(abs / 60))}${pad(abs % 60)}`;
-
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  return (
-    `${pad(d.getDate())}/${months[d.getMonth()]}/${d.getFullYear()}:` +
-    `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${tz}`
-  );
+type LoggerCtx = {
+  traceId: string;
+  spanId: string;
+  start: number;
 };
 
-const nginxErrorTime = (d: Date) =>
-  `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ` +
-  `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+type RfsOptions = RotatingFileStreamOptions<string, string, string>;
 
-const quote = (v?: string | null) => `"${(v || '-').replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+const CTX = Symbol('logger.ctx');
+
+const nanoid = (size: number = 16) => customAlphabet('0123456789abcdef', size);
 
 const getIp = (req: Request, server?: RequestIpServer | null) =>
   req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -52,80 +38,113 @@ const getIp = (req: Request, server?: RequestIpServer | null) =>
   server?.requestIP?.(req)?.address ||
   '-';
 
+const getTraceId = (req: Request) => {
+  const header = req.headers.get('x-trace-id');
+  if (header) return header;
+
+  const traceparent = req.headers.get('traceparent');
+  if (traceparent) {
+    const parts = traceparent.split('-');
+    if (parts.length === 4 && parts[1]) return parts[1];
+  }
+
+  return nanoid(16)();
+};
+
+const getSpanId = () => nanoid(8)();
+
+const getYMD = (d: Date | number) => {
+  const date = typeof d === 'number' ? new Date(d) : d;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
 export const logger = ({ dir = 'logs', enabled = true }: LoggerOptions = {}) => {
   if (!enabled) return new Elysia({ name: 'logger' });
 
   const logDir = resolve(ROOT_PATH, dir);
-  mkdirSync(logDir, { recursive: true });
 
-  const streams = new Map<LogType, { key: string; stream: WriteStream }>();
-
-  const getStream = (type: LogType, date: Date) => {
-    const key = dayKey(date);
-    const cached = streams.get(type);
-
-    if (cached?.key === key) return cached.stream;
-
-    cached?.stream.end();
-
-    const stream = createWriteStream(join(logDir, `${type}-${key}.log`), { flags: 'a' });
-
-    streams.set(type, { key, stream });
-
-    return stream;
+  const rfsOptions: RfsOptions = {
+    interval: '1d',
+    path: logDir,
+    maxFiles: 7,
+    compress: 'gzip',
   };
 
-  const write = (type: LogType, line: string) => {
-    const now = new Date();
-    const stream = getStream(type, now);
+  const accessStream = createStream((time) => `access-${getYMD(time ?? new Date())}.log`, rfsOptions);
+  const errorStream = createStream((time) => `error-${getYMD(time ?? new Date())}.log`, rfsOptions);
 
-    stream.write(line + '\n');
+  const write = (stream: NodeJS.WritableStream, obj: unknown) => {
+    const ok = stream.write(JSON.stringify(obj) + '\n');
+    if (!ok) stream.once('drain', () => {});
   };
 
   return new Elysia({ name: 'logger' })
     .onRequest(({ request }) => {
-      (request as any)._start = performance.now();
+      const ctx: LoggerCtx = {
+        traceId: getTraceId(request),
+        spanId: getSpanId(),
+        start: performance.now(),
+      };
+
+      (request as any)[CTX] = ctx;
     })
 
     .onAfterHandle({ as: 'global' }, ({ request, server, set }) => {
       const now = new Date();
+      const ctx = (request as any)[CTX] as LoggerCtx | undefined;
 
-      const start = (request as any)._start as number | undefined;
-      const cost = start ? performance.now() - start : 0;
+      const cost = ctx?.start ? performance.now() - ctx.start : 0;
 
-      const ip = getIp(request, server);
       const url = new URL(request.url);
 
-      write(
-        'access',
-        [
-          ip,
-          '- -',
-          `[${nginxTime(now)}]`,
-          quote(`${request.method} ${url.pathname}${url.search} HTTP/1.1`),
-          set.status ?? 200,
-          '-',
-          quote(request.headers.get('referer')),
-          quote(request.headers.get('user-agent')),
-          `${cost.toFixed(3)}ms`,
-        ].join(' '),
-      );
+      write(accessStream, {
+        time: now.toISOString(),
+        type: 'access',
+        level: 'info',
+
+        traceId: ctx?.traceId,
+        spanId: ctx?.spanId,
+
+        pid: process.pid,
+
+        ip: getIp(request, server),
+        method: request.method,
+        path: url.pathname,
+        query: url.searchParams.toString(),
+
+        status: set.status ?? 200,
+        cost: Number(cost.toFixed(3)),
+
+        ua: request.headers.get('user-agent') || '',
+        referer: request.headers.get('referer') || '',
+      });
     })
 
     .onError({ as: 'global' }, ({ request, server, error, code }) => {
       const now = new Date();
+      const ctx = (request as any)[CTX] as LoggerCtx | undefined;
 
-      const ip = getIp(request, server);
       const url = new URL(request.url);
 
-      const msg = error instanceof Error ? error.stack || error.message : String(error);
+      write(errorStream, {
+        time: now.toISOString(),
+        type: 'error',
+        level: 'error',
 
-      write(
-        'error',
-        `${nginxErrorTime(now)} [error] pid=${process.pid} ${msg}, ` +
-          `code=${code}, client=${ip}, request=${quote(`${request.method} ${url.pathname}${url.search}`)}`,
-      );
+        traceId: ctx?.traceId,
+        spanId: ctx?.spanId,
+
+        pid: process.pid,
+
+        ip: getIp(request, server),
+        method: request.method,
+        path: url.pathname,
+        query: url.searchParams.toString(),
+
+        code,
+
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : '',
+      });
     });
 };
-
-// export default logger;
