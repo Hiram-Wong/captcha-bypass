@@ -9,22 +9,25 @@ import { detectCaptchaService } from '@/captcha/detect';
 import { ocrCaptchaService } from '@/captcha/ocr';
 import { rotateCaptchaService } from '@/captcha/rotate';
 import { config } from '@/config';
-import { logger } from '@/middleware/logger';
+import { requestLogger } from '@/middleware/requestLogger';
 import { captchaController } from '@/modules/captcha';
 import { healthController } from '@/modules/health';
 import { mcpController } from '@/modules/mcp';
 import { APP_DESC, APP_NAME, APP_VERSION } from '@/utils/appInfo';
 import consoleUtils from '@/utils/console';
+import { log } from '@/utils/logger';
 import { fail } from '@/utils/response';
 import { isPackaged } from '@/utils/systemInfo';
 import { isJsonStr } from '@/utils/validate';
 
+const logger = log.withContext('SYSTEM');
+
 process.on('uncaughtException', (err) => {
-  console.error('[SYSTEM] 未捕获异常:', err);
+  logger.error('未捕获异常:', err);
 });
 
 process.on('unhandledRejection', (err) => {
-  console.error('[SYSTEM] Promise异常:', err);
+  logger.error('Promise异常:', err);
 });
 
 const setupModel = async (): Promise<void> => {
@@ -64,7 +67,7 @@ const setupServer = async (): Promise<void> => {
       }),
     )
     .use(
-      logger({
+      requestLogger({
         enabled: isPackaged,
         dir: 'logs',
       }),

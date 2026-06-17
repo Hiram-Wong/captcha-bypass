@@ -1,6 +1,9 @@
 import { Elysia } from 'elysia';
 
 import { auth } from '@/middleware/auth';
+import { log } from '@/utils/logger';
+import { fail, success } from '@/utils/response';
+
 import {
   ocrCaptchaSchema,
   rotateCaptchaSchema,
@@ -12,7 +15,8 @@ import {
   detectResponseSchema,
 } from './model';
 import { solveOcrCaptcha, solveRotateCaptcha, solveSlideCaptcha, solveDetectionCaptcha } from './service';
-import { fail, success } from '@/utils/response';
+
+const logger = log.withContext('CONTROLLER<captcha>');
 
 export const captchaController = new Elysia({ name: 'captcha' }).group('/captcha', (app) =>
   app
@@ -24,7 +28,7 @@ export const captchaController = new Elysia({ name: 'captcha' }).group('/captcha
           const data = await solveDetectionCaptcha(body);
           return success(data);
         } catch (err) {
-          console.error('[DETECT] 识别错误:', err);
+          logger.error('DETECT 识别错误:', err);
           return fail(err instanceof Error ? err.message || '识别失败' : '识别失败');
         }
       },
@@ -41,7 +45,7 @@ export const captchaController = new Elysia({ name: 'captcha' }).group('/captcha
           const data = await solveOcrCaptcha(body);
           return success(data);
         } catch (err) {
-          console.error('[OCR] 识别错误:', err);
+          logger.error('OCR 识别错误:', err);
           return fail(err instanceof Error ? err.message || '识别失败' : '识别失败');
         }
       },
@@ -58,7 +62,7 @@ export const captchaController = new Elysia({ name: 'captcha' }).group('/captcha
           const data = await solveRotateCaptcha(body);
           return success(data);
         } catch (err) {
-          console.error('[ROTATE] 识别错误:', err);
+          logger.error('ROTATE 识别错误:', err);
           return fail(err instanceof Error ? err.message || '识别失败' : '识别失败');
         }
       },
@@ -75,7 +79,7 @@ export const captchaController = new Elysia({ name: 'captcha' }).group('/captcha
           const data = await solveSlideCaptcha(body);
           return success(data);
         } catch (err) {
-          console.error('[SLIDE] 识别错误:', err);
+          logger.error('SLIDE 识别错误:', err);
           return fail(err instanceof Error ? err.message || '识别失败' : '识别失败');
         }
       },

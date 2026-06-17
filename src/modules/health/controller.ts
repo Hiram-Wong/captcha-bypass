@@ -1,8 +1,13 @@
 import { Elysia } from 'elysia';
 
+import { log } from '@/utils/logger';
+import { fail, success } from '@/utils/response';
+
 import { healthResponseSchema } from './model';
 import { getHealth } from './service';
-import { fail, success } from '@/utils/response';
+
+const logger = log.withContext('CONTROLLER<health>');
+
 export const healthController = new Elysia({ name: 'health' }).group('/health', (app) =>
   app.get(
     '',
@@ -11,7 +16,7 @@ export const healthController = new Elysia({ name: 'health' }).group('/health', 
         const data = getHealth();
         return success(data);
       } catch (err) {
-        console.error('[HEALTH] 健康检查错误:', err);
+        logger.error('健康检查错误:', err);
         return fail(err instanceof Error ? err.message || '健康检查失败' : '健康检查失败');
       }
     },

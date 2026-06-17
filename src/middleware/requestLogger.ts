@@ -58,8 +58,8 @@ const getYMD = (d: Date | number) => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
-export const logger = ({ dir = 'logs', enabled = true }: LoggerOptions = {}) => {
-  if (!enabled) return new Elysia({ name: 'logger' });
+export const requestLogger = ({ dir = 'logs', enabled = true }: LoggerOptions = {}) => {
+  if (!enabled) return new Elysia({ name: 'requestLogger' });
 
   const logDir = resolve(ROOT_PATH, dir);
 

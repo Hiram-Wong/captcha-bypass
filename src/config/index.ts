@@ -19,6 +19,7 @@ const envSchema = t.Object({
   PORT: t.Numeric({ minimum: 1, maximum: 65535, multipleOf: 1 }),
   OPENAPI_ENABLE: booleanSchema,
   NODE_ENV: t.Enum({ development: 'development', production: 'production' }),
+  LOG_LEVEL: t.Enum({ silly: 'silly', debug: 'debug', info: 'info', warn: 'warn', error: 'error' }),
   AUTH_KEY: t.String(),
   AUTH_TYPE: t.Numeric({ minimum: 0, maximum: 2, multipleOf: 1 }),
   DETECT_MODEL_PATH: t.String(),
@@ -38,7 +39,7 @@ const envDefaults = {
   PORT: 7788,
   OPENAPI_ENABLE: false,
   NODE_ENV: 'development',
-
+  LOG_LEVEL: 'info',
   // auth
   AUTH_KEY: '',
   AUTH_TYPE: 0,
@@ -89,6 +90,7 @@ export const config = {
   port: env.PORT,
   openapiEnable: env.OPENAPI_ENABLE,
   nodeEnv: env.NODE_ENV,
+  logLevel: env.LOG_LEVEL,
   auth: {
     key: env.AUTH_KEY,
     type: env.AUTH_TYPE,

@@ -7,6 +7,7 @@ import { Tensor } from 'onnxruntime-web';
 
 import { config } from '@/config';
 import { toMath } from '@/utils/format';
+import { log } from '@/utils/logger';
 import { ROOT_PATH } from '@/utils/path';
 
 import { AiCaptchaService } from './base/ai';
@@ -22,6 +23,8 @@ interface TextResult {
 }
 
 export type OcrResult = MathResult | TextResult;
+
+const logger = log.withContext('MODULE<ocr>');
 
 class OcrAiCaptchaService extends AiCaptchaService {
   private static instance: OcrAiCaptchaService | null = null;
@@ -58,7 +61,7 @@ class OcrAiCaptchaService extends AiCaptchaService {
     const options = this.options;
 
     const text = await this.chatText(messages, options);
-    console.debug(`[OCR][AI] raw completion: ${text}`);
+    logger.debug(`raw ai completion: ${text}`);
 
     let result = text?.trim();
     // 后置过滤
@@ -209,7 +212,7 @@ class OcrOrtCaptchaService extends BaseOrtservice {
     // CTC 解码（限制在 allowedIndices 范围内 argmax）
     const ctcDecode = this.ctcGreedyDecode(output, vocab, { blankIndex: 0, allowedIndices });
     const text = typeof ctcDecode === 'string' ? ctcDecode : ctcDecode[0];
-    console.debug(`[OCR][ONNX] raw ctc decode: ${text}`);
+    logger.debug(`raw ctc decode: ${text}`);
 
     return { code: text };
   }

@@ -9,6 +9,9 @@ import type {
   DetectCaptchaInput,
 } from '@/modules/captcha/model';
 import { toImageBase64 } from '@/utils/format';
+import { log } from '@/utils/logger';
+
+const logger = log.withContext('SERVICE<captcha>');
 
 export const solveDetectionCaptcha = async (input: DetectCaptchaInput): Promise<DetectResult> => {
   const { type, bg, thumb } = input;
@@ -29,7 +32,7 @@ export const solveDetectionCaptcha = async (input: DetectCaptchaInput): Promise<
       throw new Error('不支持的识别类型');
   }
 
-  console.info(`[DETECTION][${type}] 检出 ${result.length} 个目标`);
+  logger.debug(`${type} detect 检出 ${result.length} 个目标`);
 
   return result;
 };
@@ -43,12 +46,12 @@ export const solveOcrCaptcha = async (input: OcrCaptchaInput): Promise<OcrResult
   switch (type) {
     case 'math': {
       result = await ocrCaptchaService.math(bgImgB64, action, limit);
-      console.info(`[OCR][${type}] 识别结果: ${result.formula} = ${result.result}`);
+      logger.debug(`${type} ocr 识别结果: ${result.formula} = ${result.result}`);
       break;
     }
     case 'text': {
       result = await ocrCaptchaService.text(bgImgB64, action, limit);
-      console.info(`[OCR][${type}] 识别结果: ${result.code}`);
+      logger.debug(`${type} ocr 识别结果: ${result.code}`);
       break;
     }
     default:
@@ -82,7 +85,7 @@ export const solveRotateCaptcha = async (input: RotateCaptchaInput): Promise<Rot
       throw new Error('不支持的识别类型');
   }
 
-  console.info(`[ROTATE][${type}] 识别结果: 顺时针-${result.cw}, 逆时针-${result.ccw}`);
+  logger.debug(`${type} rotate 识别结果: 顺时针-${result.cw}, 逆时针-${result.ccw}`);
 
   return result;
 };
@@ -105,7 +108,7 @@ export const solveSlideCaptcha = async (input: SlideCaptchaInput): Promise<Slide
       throw new Error('不支持的识别类型');
   }
 
-  console.info(`[SLIDE][${type}] 识别结果: x-${result.x}, y-${result.y}`);
+  logger.debug(`${type} slide 识别结果: x-${result.x}, y-${result.y}`);
 
   return result;
 };

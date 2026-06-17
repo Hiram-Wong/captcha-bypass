@@ -1,6 +1,7 @@
 import { generateText, type LanguageModel, type ModelMessage } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
+import { log } from '@/utils/logger';
 import { isHttp } from '@/utils/validate';
 
 type LLMSupportProvider = 'openai';
@@ -12,6 +13,8 @@ interface LLMOptions {
   baseURL: string;
   model: string;
 }
+
+const logger = log.withContext('MODULE<ai>');
 
 export class AiCaptchaService {
   private provider: LLMProvider | null = null;
@@ -78,11 +81,10 @@ export class AiCaptchaService {
 
       return text;
     } catch (err) {
-      console.error(err);
-      console.error(
+      logger.error(
         `Failed to complete chat, the status code is ${(err as any).statusCode}, reason detail with ${(err as any).responseBody}`,
       );
-      return '';
+      throw new Error('LLM request failed');
     }
   }
 }
