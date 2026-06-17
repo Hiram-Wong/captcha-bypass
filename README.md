@@ -50,6 +50,7 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 | PORT               | `number`                          | 7788             | 服务端口                                                            |
 | OPENAPI_ENABLE     | `boolean`                         | false            | 是否启用 OpenAPI 文档                                               |
 | NODE_ENV           | `"development"` \| `"production"` | development      | 运行环境                                                            |
+| LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` | info | 日志级别<br>从低到高：silly < debug < info < warn < error |
 | AUTH_TYPE          | `0` \| `1` \| `2`                 | 0                | 认证类型<br>0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)          |
 | AUTH_KEY           | `string`                          | 空字符串         | 认证密钥<br>AUTH_TYPE=1/2 时使用                                    |
 | DETECT_MODEL_PATH  | `string`                          | 空字符串         | Detect 模型文件路径<br>为空时加载 `models/detect.onnx`              |

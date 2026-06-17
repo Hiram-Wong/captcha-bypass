@@ -7,6 +7,7 @@
 | `PORT`               | number  | 7788        | Service port                                                    |
 | `OPENAPI_ENABLE`     | boolean | false       | Enable Swagger UI at `/docs`                                    |
 | `NODE_ENV`           | string  | development | `development`, or `production`                                  |
+| `LOG_LEVEL`          | string  | info        | Log level<br>`silly` < `debug` < `info` < `warn` < `error`      |
 | `AUTH_TYPE`          | 0\|1\|2 | 0           | Auth type<br>0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
 | `AUTH_KEY`           | string  | ""          | Auth key<br>Used when AUTH_TYPE=1 or 2                          |
 | `DETECT_MODEL_PATH`  | string  | ""          | Detect model path<br>Defaults to `models/detect.onnx` if empty  |
