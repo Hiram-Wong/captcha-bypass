@@ -79,9 +79,9 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 | OCR_CHARSET_PATH   | `string`                          | 空字符串         | OCR 字符集文件路径<br>为空时加载 `models/ocr.json`                  |
 | OCR_CHARSET_RANGES | `string`                          | 空字符串         | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果   |
 | ROTATE_MODEL_PATH  | `string`                          | 空字符串         | ROTATE 模型文件路径<br>为空时加载 `models/rotate.onnx`              |
-| OPENAI_BASE_URL    | `string`                          | 空字符串         | OpenAI API 地址<br>仅支持 `/chat/completions`，需带版本号（如 `/v1`）|
+| OPENAI_BASE_URL    | `string`                          | 空字符串         | OpenAI API 地址<br>仅支持 `/chat/completions`                      |
 | OPENAI_API_KEY     | `string`                          | 空字符串         | OpenAI API 密钥                                                     |
-| OPENAI_OCR_MODEL   | `string`                          | PaddleOCR-VL-1.6 | OCR 专用模型名称<br>推荐：PaddleOCR(推荐)、HunyuanOCR、DeepSeek-OCR |
+| OPENAI_OCR_MODEL   | `string`                          | PaddleOCR-VL-1.6 | OCR 专用模型名称<br>推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR       |
 | OPENAI_MODEL       | `string`                          | gpt-5.5          | 通用模型名称                                                        |
 
 ### 请求地址
@@ -115,7 +115,7 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 #### 算术题识别不准确？
 
 - 算术计算也与模型挂钩。
-- 只支持四则运算(加减乘除), 不支持其他运算(取余开方取余)等计算。
+- 只支持整数四则运算(加减乘除), 不支持其他运算(取余开方取余)等计算。
 - `+`和`*`错误率较高, 建议根据给出的公式手动替换符号再次计算。
 
 </details>

@@ -36,12 +36,20 @@ class OcrAiCaptchaService extends AiCaptchaService {
     return OcrAiCaptchaService.instance;
   }
 
-  private buildMessages(bgBase64: string): ModelMessage[] {
+  private buildMessages(bgBase64: string, ranges?: Set<string>): ModelMessage[] {
+    const allowedCharset =
+      ranges && ranges.size > 0
+        ? Array.from(ranges)
+            .map((c) => `"${c}"`)
+            .join(', ')
+        : '';
+    const prompt = `提取文字${allowedCharset.length ? `，仅允许使用以下字符：${allowedCharset}。` : ''}`;
+
     return [
       {
         role: 'user',
         content: [
-          { type: 'text', text: '提取文字' },
+          { type: 'text', text: prompt },
           { type: 'image', image: bgBase64 },
         ],
       },
@@ -57,22 +65,13 @@ class OcrAiCaptchaService extends AiCaptchaService {
   }
 
   public async text(bgBase64: string, ranges?: Set<string>): Promise<TextResult> {
-    const messages = this.buildMessages(bgBase64);
+    const messages = this.buildMessages(bgBase64, ranges);
     const options = this.options;
 
     const text = await this.chatText(messages, options);
     logger.debug(`raw ai completion: ${text}`);
 
-    let result = text?.trim();
-    // 后置过滤
-    if (ranges && ranges.size > 0) {
-      result = result
-        .normalize('NFKC')
-        .split('')
-        .filter((char) => ranges.has(char))
-        .join('');
-    }
-    return { code: result };
+    return { code: text };
   }
 
   public async math(bgBase64: string, ranges?: Set<string>): Promise<{ formula: string; result: number }> {
@@ -82,14 +81,31 @@ class OcrAiCaptchaService extends AiCaptchaService {
       ...'零一二三四五六七八九',
       ...'〇壹贰叁肆伍陆柒捌玖',
       ...'加减乘除等',
-      ...'+-_*x÷/=?',
-      ...'﹢⁺₊–—−﹣⁻₋_ˍ‾✕✖×ⅩⅹxX÷⁄∕＝﹦≈',
+      ...'+-*x÷/=?',
     ]);
     const limit = ranges && ranges.size > 0 ? ranges : defaultRanges;
 
     const { code } = await this.text(bgBase64, limit);
 
-    const formula = toMath(code);
+    let formula = code
+      .normalize('NFKC') // 规范化字符格式
+
+      // latex 包裹处理
+      .replace(/\$\$(.*?)\$\$/gs, '$1')
+      .replace(/\\\[(.*?)\\\]/gs, '$1')
+      .replace(/\\\((.*?)\\\)/gs, '$1')
+
+      // latex boxed处理
+      .replace(/\\boxed\{([^{}]*)\}/g, '$1')
+      .replace(/\\boxed/g, '')
+
+      // latex 运算符处理
+      .replace(/\\times/g, '*')
+      .replace(/\\cdot/g, '*')
+      .replace(/\\div/g, '/')
+
+      .replace(/\{([^{}]*)\}/g, '$1'); // 轻量解包
+    formula = toMath(formula);
     if (!formula) throw new Error('Formula expression error');
 
     let result: unknown;

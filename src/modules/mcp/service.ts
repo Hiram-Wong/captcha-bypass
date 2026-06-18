@@ -4,7 +4,7 @@ import {
   solveSlideCaptcha,
   solveDetectionCaptcha,
 } from '@/modules/captcha/service';
-import { APP_VERSION } from '@/utils/appInfo'
+import { APP_VERSION } from '@/utils/appInfo';
 import { isJsonRpcV2 } from '@/utils/validate';
 
 // ── JSON-RPC 2.0 errors ──

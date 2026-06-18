@@ -15,9 +15,9 @@
 | `OCR_CHARSET_PATH`   | string  | ""          | OCR charset file path<br>Defaults to `models/ocr.json` if empty |
 | `OCR_CHARSET_RANGES` | string  | ""          | Global charset filter<br>e.g. `"0123456789"`                     |
 | `ROTATE_MODEL_PATH`  | string  | ""          | Rotate model path<br>Defaults to `models/rotate.onnx` if empty  |
-| `OPENAI_BASE_URL`    | string  | ""          | OpenAI API base URL<br>Only `/chat/completions` supported, must include version prefix (e.g. `/v1`) |
+| `OPENAI_BASE_URL`    | string  | ""          | OpenAI API base URL<br>Only `/chat/completions` supported |
 | `OPENAI_API_KEY`     | string  | ""          | OpenAI API key                                                  |
-| `OPENAI_OCR_MODEL`   | string  | PaddleOCR-VL-1.6 | OCR-specific model name<br>Recommended: PaddleOCR(recommended), DeepSeek-OCR, HunyuanOCR |
+| `OPENAI_OCR_MODEL`   | string  | PaddleOCR-VL-1.6 | OCR-specific model name<br>Recommended: PaddleOCR, DeepSeek-OCR, HunyuanOCR |
 | `OPENAI_MODEL`       | string  | gpt-5.5     | General model name                                                |
 
 ## Endpoints

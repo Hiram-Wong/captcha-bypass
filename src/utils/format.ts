@@ -78,12 +78,15 @@ export const toMath = (data: string): string => {
     // '（': '(', '）': ')'
   };
 
-  return data
-    .normalize('NFKC') // 规范化字符
-    .replace(/./g, (ch) => map[ch] ?? ch)
-    .replace(/(\d)\s+(?=\d)/g, '$1')
-    .replace(/\s+/g, '')
+  const result = data
+    .trim()
+    .normalize('NFKC')
+
+    .replace(/./g, (ch) => map[ch] ?? ch) // OCR 噪声
+
     .replace(/=+$/, '')
-    .split('=')[0]
-    .replace(/[^\d+\-*/.=]/g, '');
+    .split('=')[0] // 截断等号内容
+    .replace(/[^\d+\-*/.=]/g, ''); // 过滤非相关字符
+
+  return result;
 };

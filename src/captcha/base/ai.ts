@@ -72,7 +72,6 @@ export class AiCaptchaService {
       const { text } = await generateText({
         model: client(model),
         messages: [...messages],
-        temperature: 1,
         providerOptions: {},
         allowSystemInMessages: true,
         timeout: 30_000,
