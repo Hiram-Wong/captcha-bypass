@@ -1,6 +1,6 @@
 {
   "name": "captcha-bypass",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "private": true,
   "description": "Captcha bypass service using OCR technology.",
   "type": "module",
@@ -33,7 +33,7 @@
     "@elysia/cors": "^1.4.2",
     "@elysia/openapi": "^1.4.15",
     "@techstark/opencv-js": "^4.12.0-release.1",
-    "ai": "^6.0.207",
+    "ai": "^6.0.208",
     "dotenv": "^17.4.2",
     "nanoid": "^5.1.11",
     "elysia": "^1.4.29",

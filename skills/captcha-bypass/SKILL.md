@@ -23,7 +23,7 @@ The service starts at `http://127.0.0.1:7788`. Verify with:
 
 ```bash
 curl http://127.0.0.1:7788/health
-# → {"status":0,"data":{"version":"1.0.7","timestamp":...},"msg":"success"}
+# → {"status":0,"data":{"version":"1.0.8","timestamp":...},"msg":"success"}
 ```
 
 If the service is already running, skip the start step and call the API directly.
@@ -207,7 +207,7 @@ curl -X POST 'http://127.0.0.1:7788/mcp' \
 No authentication required.
 
 ```json
-{ "status": 0, "data": { "version": "1.0.7", "timestamp": "..." }, "msg": "success" }
+{ "status": 0, "data": { "version": "1.0.8", "timestamp": "..." }, "msg": "success" }
 ```
 
 ## Image Input Formats

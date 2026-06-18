@@ -116,7 +116,8 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 
 - 算术计算也与模型挂钩。
 - 只支持整数四则运算(加减乘除), 不支持其他运算(取余开方取余)等计算。
-- `+`和`*`错误率较高, 建议根据给出的公式手动替换符号再次计算。
+- onnx: 对`+`和`*`错误率较高, 建议根据给出的公式手动替换符号再次计算。
+- ai: PaddleOCR(识别不错, 理解提示词不太行)、HunyuanOCR(识别和理解都还不错)、DeepSeek-OCR(没试过)
 
 </details>
 
