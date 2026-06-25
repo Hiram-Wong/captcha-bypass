@@ -1,6 +1,6 @@
-import cv, { type MinMaxLoc } from '@techstark/opencv-js';
+import type { MinMaxLoc } from '@techstark/opencv-js';
 
-import { MatManager, BaseCvService } from './base/cv';
+import { cv, MatManager, BaseCvService } from './base/cv';
 
 export interface SlideResult {
   x: number;

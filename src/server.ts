@@ -5,6 +5,7 @@ import { openapi } from '@elysia/openapi';
 import { JSON5 } from 'bun';
 import { Elysia } from 'elysia';
 
+import { BaseCvService } from '@/captcha/base/cv';
 import { detectCaptchaService } from '@/captcha/detect';
 import { ocrCaptchaService } from '@/captcha/ocr';
 import { rotateCaptchaService } from '@/captcha/rotate';
@@ -31,6 +32,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 const setupModel = async (): Promise<void> => {
+  await BaseCvService.init();
   await Promise.all([detectCaptchaService.init(), ocrCaptchaService.init(), rotateCaptchaService.init()]);
 };
 

@@ -3,12 +3,12 @@ import { resolve } from 'node:path';
 
 import { Jimp } from 'jimp';
 import { Tensor } from 'onnxruntime-web';
-import cv, { type MinMaxLoc } from '@techstark/opencv-js';
+import type { MinMaxLoc } from '@techstark/opencv-js';
 
 import { config } from '@/config';
 import { ROOT_PATH } from '@/utils/path';
 
-import { MatManager, BaseCvService } from './base/cv';
+import { cv, MatManager, BaseCvService } from './base/cv';
 import { BaseOrtservice } from './base/ort';
 
 export type RotateResult = {

@@ -1,7 +1,25 @@
-import cv, { type Mat, type Vector } from '@techstark/opencv-js';
+import type { Mat, Vector, CV } from '@techstark/opencv-js';
+import cvModule from '@techstark/opencv-js';
 import { Jimp } from 'jimp';
 
+export let cv: CV;
+
 export class BaseCvService {
+  public static async init(): Promise<void> {
+    if (cvModule instanceof Promise) {
+      cv = await cvModule; // v5 默认导出为 Promise
+    } else {
+      if (cvModule.Mat) {
+        cv = cvModule;
+      } else {
+        await new Promise<void>((resolve) => {
+          cvModule.onRuntimeInitialized = () => resolve();
+        });
+        cv = cvModule;
+      }
+    }
+  }
+
   // Convert base64 image to RGBA matrix
   public async b64ImgToMatRGBA(base64: string): Promise<Mat> {
     const image = await Jimp.read(Buffer.from(base64.replace(/^data:image\/\w+;base64,/, ''), 'base64')); // jimp defaults to RGBA
