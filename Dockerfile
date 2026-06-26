@@ -17,6 +17,7 @@ WORKDIR /app
 
 COPY --from=build /app/dist/captcha-bypass .
 COPY --from=build /app/dist/models ./models
+COPY --from=build /app/dist/public ./public
 
 EXPOSE 7788
 
