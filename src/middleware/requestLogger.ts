@@ -1,7 +1,9 @@
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import process from 'node:process';
 
+import dateFormat from 'dateformat';
 import { Elysia } from 'elysia';
 import { customAlphabet } from 'nanoid';
 import { createStream, type Options as RotatingFileStreamOptions } from 'rotating-file-stream';
@@ -11,6 +13,7 @@ import { ROOT_PATH } from '@/utils/path';
 interface LoggerOptions {
   dir?: string;
   enabled?: boolean;
+  teeToStdout?: RotatingFileStreamOptions['teeToStdout'];
 }
 
 type RequestIpServer = {
@@ -53,25 +56,56 @@ const getTraceId = (req: Request) => {
 
 const getSpanId = () => nanoid(8)();
 
-const getYMD = (d: Date | number) => {
-  const date = typeof d === 'number' ? new Date(d) : d;
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+const createLogHistory = (type: string) => `.${type}_history.txt`;
+
+const createLogGenerator = (prefix: string) => (time?: Date | number | null, _index?: number) => {
+  const date = dateFormat(time ?? new Date(), 'yyyy-mm-dd');
+  return `${prefix}-${date}.log`;
+  // return typeof index === 'undefined' || index <= 1 ? `${prefix}-${date}.log` : `${prefix}-${date}.${index}.log`;
 };
 
-export const requestLogger = ({ dir = 'logs', enabled = true }: LoggerOptions = {}) => {
+const initHistory = (logDir: string, fileName: string, prefix: string): void => {
+  const historyPath = resolve(logDir, fileName);
+  const currentLog = resolve(logDir, createLogGenerator(prefix)());
+
+  if (!existsSync(historyPath)) {
+    writeFileSync(historyPath, currentLog + '\n');
+    return;
+  }
+
+  const lines = readFileSync(historyPath, 'utf-8').trim().split('\n').filter(Boolean);
+  if (lines.includes(currentLog)) return;
+
+  writeFileSync(historyPath, [...lines, currentLog].join('\n') + '\n');
+};
+
+export const requestLogger = ({ dir = 'logs', enabled = true, teeToStdout = false }: LoggerOptions = {}) => {
   if (!enabled) return new Elysia({ name: 'requestLogger' });
 
   const logDir = resolve(ROOT_PATH, dir);
 
   const rfsOptions: RfsOptions = {
     interval: '1d',
-    path: logDir,
+    intervalBoundary: true,
     maxFiles: 7,
-    compress: 'gzip',
+    path: logDir,
+    teeToStdout,
   };
 
-  const accessStream = createStream((time) => `access-${getYMD(time ?? new Date())}.log`, rfsOptions);
-  const errorStream = createStream((time) => `error-${getYMD(time ?? new Date())}.log`, rfsOptions);
+  const accessHistoryFile = createLogHistory('access');
+  const errorHistoryFile = createLogHistory('error');
+
+  const accessStream = createStream(createLogGenerator('access'), {
+    ...rfsOptions,
+    history: accessHistoryFile,
+  });
+  const errorStream = createStream(createLogGenerator('error'), {
+    ...rfsOptions,
+    history: errorHistoryFile,
+  });
+
+  accessStream.on('open', () => initHistory(logDir, accessHistoryFile, 'access'));
+  errorStream.on('open', () => initHistory(logDir, errorHistoryFile, 'error'));
 
   const write = (stream: NodeJS.WritableStream, obj: unknown) => {
     const ok = stream.write(JSON.stringify(obj) + '\n');
