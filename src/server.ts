@@ -1,5 +1,4 @@
 import process from 'node:process';
-import { resolve } from 'node:path';
 
 import { cors } from '@elysia/cors';
 import { openapi } from '@elysia/openapi';
@@ -15,10 +14,10 @@ import { requestLogger } from '@/middleware/requestLogger';
 import { captchaController } from '@/modules/captcha';
 import { healthController } from '@/modules/health';
 import { mcpController } from '@/modules/mcp';
+import { otherController } from '@/modules/other';
 import { APP_DESC, APP_NAME, APP_VERSION } from '@/utils/appInfo';
 import consoleUtils from '@/utils/console';
 import { log } from '@/utils/logger';
-import { PUBLIC_PATH } from '@/utils/path';
 import { fail } from '@/utils/response';
 import { isPackaged } from '@/utils/systemInfo';
 import { isJsonStr } from '@/utils/validate';
@@ -76,11 +75,6 @@ const setupServer = async (): Promise<void> => {
         dir: 'logs',
       }),
     )
-    .get('/favicon.ico', ({ set }) => {
-      set.headers['Cache-Control'] = 'public, max-age=31536000, immutable, no-transform';
-      set.headers['Content-Type'] = 'image/x-icon';
-      return Bun.file(resolve(PUBLIC_PATH, 'favicon.ico'));
-    })
     .onError(({ code, error, status }) => {
       if (code === 'NOT_FOUND') {
         return status(404, fail('路由不存在'));
@@ -107,6 +101,7 @@ const setupServer = async (): Promise<void> => {
     .use(captchaController)
     .use(mcpController)
     .use(healthController)
+    .use(otherController)
     .listen(config.port);
 };
 

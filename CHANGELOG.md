@@ -1,7 +1,7 @@
 ## 1.0.8
 
+- 特性: 增加 favicon.ico 和 robots.txt
 - 优化: 适配 opencv 5.x
-- 修复: 缺失favicon.ico导致请求日志每次都记录错误
 
 ## 1.0.8
 
