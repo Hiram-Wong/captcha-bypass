@@ -124,7 +124,6 @@ export const requestLogger = ({ dir = 'logs', enabled = true, teeToStdout = fals
     })
 
     .onAfterHandle({ as: 'global' }, ({ request, server, set }) => {
-      const now = new Date();
       const ctx = (request as any)[CTX] as LoggerCtx | undefined;
 
       const cost = ctx?.start ? performance.now() - ctx.start : 0;
@@ -132,7 +131,7 @@ export const requestLogger = ({ dir = 'logs', enabled = true, teeToStdout = fals
       const url = new URL(request.url);
 
       write(accessStream, {
-        time: now.toISOString(),
+        time: dateFormat(new Date(), "yyyy-mm-dd'T'HH:MM:ss'Z'"),
         type: 'access',
         level: 'info',
 
@@ -155,13 +154,12 @@ export const requestLogger = ({ dir = 'logs', enabled = true, teeToStdout = fals
     })
 
     .onError({ as: 'global' }, ({ request, server, error, code }) => {
-      const now = new Date();
       const ctx = (request as any)[CTX] as LoggerCtx | undefined;
 
       const url = new URL(request.url);
 
       write(errorStream, {
-        time: now.toISOString(),
+        time: dateFormat(new Date(), "yyyy-mm-dd'T'HH:MM:ss'Z'"),
         type: 'error',
         level: 'error',
 
