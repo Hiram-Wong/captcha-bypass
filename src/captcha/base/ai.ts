@@ -2,6 +2,7 @@ import { generateText, type LanguageModel, type ModelMessage } from 'ai';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 import { log } from '@/utils/logger';
+import { isPackaged } from '@/utils/systemInfo';
 import { isHttp } from '@/utils/validate';
 
 type LLMSupportProvider = 'openai';
@@ -15,6 +16,8 @@ interface LLMOptions {
 }
 
 const logger = log.withContext('MODULE<ai>');
+
+if (isPackaged) globalThis.AI_SDK_LOG_WARNINGS = false;
 
 export class AiCaptchaService {
   private provider: LLMProvider | null = null;

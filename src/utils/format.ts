@@ -52,6 +52,12 @@ export const toImageBase64 = async (data: ImageInput): Promise<string> => {
   return data;
 };
 
+export const base64ToMediaType = (base64: string): string => {
+  const match = base64.match(/^data:(.+?);base64,/);
+  if (!match || match.length < 2) throw new Error('无效的 base64 数据');
+  return match[1];
+}
+
 export const toMath = (data: string): string => {
   // prettier-ignore
   const map: Record<string, string> = {

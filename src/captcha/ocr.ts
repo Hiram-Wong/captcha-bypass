@@ -6,7 +6,7 @@ import { Jimp } from 'jimp';
 import { Tensor } from 'onnxruntime-web';
 
 import { config } from '@/config';
-import { toMath } from '@/utils/format';
+import { base64ToMediaType, toMath } from '@/utils/format';
 import { log } from '@/utils/logger';
 import { ROOT_PATH } from '@/utils/path';
 
@@ -37,6 +37,7 @@ class OcrAiCaptchaService extends AiCaptchaService {
   }
 
   private buildMessages(bgBase64: string, ranges?: Set<string>): ModelMessage[] {
+    const mediaType = base64ToMediaType(bgBase64);
     const allowedCharset =
       ranges && ranges.size > 0
         ? Array.from(ranges)
@@ -50,7 +51,8 @@ class OcrAiCaptchaService extends AiCaptchaService {
         role: 'user',
         content: [
           { type: 'text', text: prompt },
-          { type: 'image', image: bgBase64 },
+          // { type: 'image', image: bgBase64 }, // <=6.x
+          { type: 'file', data: bgBase64, mediaType }, // >=7.x
         ],
       },
     ];
