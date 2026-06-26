@@ -1,4 +1,4 @@
-## 1.0.8
+## 1.0.9
 
 - 特性: 增加 favicon.ico 和 robots.txt
 - 优化: 适配 opencv 5.x

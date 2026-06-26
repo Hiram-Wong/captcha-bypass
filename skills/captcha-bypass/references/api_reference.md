@@ -32,7 +32,7 @@ No authentication required. Returns service health and version.
 {
   "status": 0,
   "data": {
-    "version": "1.0.8",
+    "version": "1.0.9",
     "timestamp": 1781719500449
   },
   "msg": "success"
