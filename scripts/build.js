@@ -8,6 +8,7 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const DIST_DIR = path.resolve(ROOT_DIR, 'dist');
 const ENTRY_FILE = path.resolve(ROOT_DIR, 'src', 'index.ts');
 const MODELS_DIR = path.resolve(ROOT_DIR, 'models');
+const PUBLIC_DIR = path.resolve(ROOT_DIR, 'public');
 
 const PLATFORM = {
   darwin: { bun: 'darwin', name: 'mac' },
@@ -43,6 +44,13 @@ const copyRuntimeModels = async () => {
   const dest = path.resolve(DIST_DIR, 'models');
   await fsp.rm(dest, { recursive: true, force: true });
   await fsp.cp(MODELS_DIR, dest, { recursive: true });
+};
+
+const copyPublicAssets = async () => {
+  if (!fs.existsSync(PUBLIC_DIR)) return;
+  const dest = path.resolve(DIST_DIR, 'public');
+  await fsp.rm(dest, { recursive: true, force: true });
+  await fsp.cp(PUBLIC_DIR, dest, { recursive: true });
 };
 
 const buildOne = async (platform, arch) => {
@@ -92,6 +100,7 @@ const main = async () => {
   await fsp.rm(DIST_DIR, { recursive: true, force: true });
   await fsp.mkdir(DIST_DIR, { recursive: true });
   await copyRuntimeModels();
+  await copyPublicAssets();
 
   for (const { platform, arch } of targets) {
     await buildOne(platform, arch);
