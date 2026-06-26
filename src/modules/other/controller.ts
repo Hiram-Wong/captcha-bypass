@@ -14,7 +14,7 @@ export const otherController = new Elysia({ name: 'other' }).group('', (app) =>
         return Bun.file(resolve(PUBLIC_PATH, 'favicon.ico'));
       },
       {
-        detail: { hide: true }
+        detail: { hide: true },
       },
     )
     .get(
@@ -24,7 +24,7 @@ export const otherController = new Elysia({ name: 'other' }).group('', (app) =>
         return Bun.file(resolve(PUBLIC_PATH, 'robots.txt'));
       },
       {
-        detail: { hide: true }
+        detail: { hide: true },
       },
     ),
 );
