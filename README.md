@@ -279,6 +279,7 @@ bun run build:{platform}:{arch} # 构建二进制, 如: bun run build:darwin:arm
 ## 🙏 鸣谢
 
 - [onnxruntime-web](https://github.com/microsoft/onnxruntime-web) - 模型推理
+- [@techstark/opencv-js](https://github.com/TechStark/opencv-js) - opencv
 - [ddddocr](https://github.com/sml2h3/ddddocr) - 文字识别/对象识别/滑块算法
 - [ddddocr(pr 259)](https://github.com/k23223/ddddocr) - 单图矫正算法
 - [JJBJJ](https://github.com/JJBJJ) - 双图Nox算法
