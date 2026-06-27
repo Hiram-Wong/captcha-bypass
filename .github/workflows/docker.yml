@@ -80,7 +80,13 @@ jobs:
                   or (.key | endswith(\"docker.io-\"))
                   or (.key | endswith(\"index-buildkit-\"))
                 )
-              | select((.lastAccessedAt | fromdateiso8601) < $CUTOFF)
+              | select(
+                  (
+                    .created_at
+                    | sub(\"\\.[0-9]+Z$\"; \"Z\")
+                    | fromdateiso8601
+                  ) < $CUTOFF
+                )
               | .id
             " |
           xargs -r -I {} gh cache delete {} --repo "$REPO" --confirm || true
