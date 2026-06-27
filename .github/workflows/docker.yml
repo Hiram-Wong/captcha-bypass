@@ -79,7 +79,7 @@ jobs:
                 )
               | select(
                   (
-                    .created_at[0:19] + \"Z"
+                    .created_at[0:19] + \"Z\"
                     | fromdateiso8601
                   ) < $CUTOFF
                 )
