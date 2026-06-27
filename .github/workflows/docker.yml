@@ -106,6 +106,22 @@ jobs:
             gh api "repos/$REPO/actions/artifacts/{}" -X DELETE || true
           '
 
+      - name: Clean up untagged container images
+        run: |
+          OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          PACKAGE=$(echo '${{ github.event.repository.name }}' | tr '[:upper:]' '[:lower:]')
+
+          gh api "users/$OWNER/packages/container/$PACKAGE/versions" --paginate \
+            --jq "
+              .[]
+              | select((.metadata.container.tags | length) == 0)
+              | .id
+            " |
+          while read -r id; do
+            echo "Deleting untagged container image version: $id"
+            gh api "users/$OWNER/packages/container/$PACKAGE/versions/$id" -X DELETE || true
+          done
+
   build-push:
     needs: meta
     runs-on: ubuntu-latest
