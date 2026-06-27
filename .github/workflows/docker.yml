@@ -53,26 +53,26 @@ jobs:
           echo "description=$DESC" >> "$GITHUB_OUTPUT"
 
   cleanup:
-  needs: meta
-  runs-on: ubuntu-latest
-  steps:
-    - name: Clean up stale BuildKit caches
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        REPO: ${{ github.repository }}
-      run: |
-        cutoff_ts=$(date -d "7 days ago" +%s)
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clean up stale BuildKit caches
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          cutoff_ts=$(date -d "7 days ago" +%s)
 
-        gh api repos/$REPO/actions/caches --paginate | \
-        jq -r --argjson cutoff "$cutoff_ts" '
-          .actions_caches[]
-          | select(.key | startswith("buildkit-"))
-          | select((.last_accessed_at | fromdateiso8601) < $cutoff)
-          | .id
-        ' | while read -r cache_id; do
-          echo "Deleting cache $cache_id"
-          gh api repos/$REPO/actions/caches/$cache_id -X DELETE
-        done
+          gh api repos/$REPO/actions/caches --paginate | \
+          jq -r --argjson cutoff "$cutoff_ts" '
+            .actions_caches[]
+            | select(.key | startswith("buildkit-"))
+            | select((.last_accessed_at | fromdateiso8601) < $cutoff)
+            | .id
+          ' | while read -r cache_id; do
+            echo "Deleting cache $cache_id"
+            gh api repos/$REPO/actions/caches/$cache_id -X DELETE
+          done
 
   build-push:
     needs: meta
