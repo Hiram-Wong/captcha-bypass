@@ -73,16 +73,16 @@ jobs:
             --repo "$REPO" \
             --limit 1000 \
             --json id,key,lastAccessedAt \
-            --jq '
+            --jq "
               .[]
               | select(
-                  (.key | startswith("buildkit-blob"))
-                  or (.key | endswith("docker.io-"))
-                  or (.key | endswith("index-buildkit-"))
+                  (.key | startswith(\"buildkit-blob\"))
+                  or (.key | endswith(\"docker.io-\"))
+                  or (.key | endswith(\"index-buildkit-\"))
                 )
               | select((.lastAccessedAt | fromdateiso8601) < $CUTOFF)
               | .id
-            ' |
+            " |
           xargs -r -I {} gh cache delete {} --repo "$REPO" --confirm || true
 
       - name: Clean up stale artifacts
@@ -90,12 +90,12 @@ jobs:
           CUTOFF=${{ steps.cleanup.outputs.cutoff_ts }}
 
           gh api "repos/$REPO/actions/artifacts" --paginate \
-            --jq '
+            --jq "
               .artifacts[]
-              | select(.name | endswith(".dockerbuild"))
+              | select(.name | endswith(\".dockerbuild\"))
               | select((.created_at | fromdateiso8601) < $CUTOFF)
               | .id
-            ' |
+            " |
           xargs -r -I {} sh -c '
             echo "Deleting artifact {}"
             gh api "repos/$REPO/actions/artifacts/{}" -X DELETE || true

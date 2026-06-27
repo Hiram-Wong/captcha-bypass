@@ -62,15 +62,15 @@ jobs:
           CUTOFF=${{ steps.cleanup.outputs.cutoff_ts }}
 
           gh api "repos/$REPO/actions/artifacts" --paginate \
-            --jq '
+            --jq "
               .artifacts[]
               | select(
-                  (.name | startswith("binary-"))
-                  or (.name == "models")
+                  (.name | startswith(\"binary-\"))
+                  or (.name == \"models\")
                 )
               | select((.created_at | fromdateiso8601) < $CUTOFF)
               | .id
-            ' |
+            " |
           xargs -r -I {} sh -c '
             echo "Deleting artifact {}"
             gh api "repos/$REPO/actions/artifacts/{}" -X DELETE || true
