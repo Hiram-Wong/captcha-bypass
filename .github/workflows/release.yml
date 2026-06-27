@@ -22,6 +22,7 @@ on:
       - 'v*'
 
 permissions:
+  actions: write
   contents: write
 
 jobs:
@@ -46,13 +47,19 @@ jobs:
   cleanup-artifacts:
     needs: meta
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+
     steps:
-      - name: Delete old artifacts
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
+      - name: Calculate cutoff time
+        id: cleanup
         run: |
-          cutoff_ts=$(date -d "7 days ago" +%s)
+          echo "cutoff_ts=$(date -u -d '7 days ago' +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Cleanup old artifacts
+        run: |
+          CUTOFF=${{ steps.cleanup.outputs.cutoff_ts }}
 
           gh api "repos/$REPO/actions/artifacts" --paginate \
             --jq '
@@ -61,12 +68,12 @@ jobs:
                   (.name | startswith("binary-"))
                   or (.name == "models")
                 )
-              | select((.created_at | fromdateiso8601) < '$cutoff_ts')
+              | select((.created_at | fromdateiso8601) < $CUTOFF)
               | .id
             ' |
           xargs -r -I {} sh -c '
             echo "Deleting artifact {}"
-            gh api "repos/$REPO/actions/artifacts/{}" -X DELETE
+            gh api "repos/$REPO/actions/artifacts/{}" -X DELETE || true
           '
 
   build:
