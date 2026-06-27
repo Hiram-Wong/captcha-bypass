@@ -43,6 +43,28 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
+  cleanup-artifacts:
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          cutoff_ts=$(date -d "7 days ago" +%s)
+
+          gh api repos/$REPO/actions/artifacts --paginate | \
+          jq -r --argjson cutoff "$cutoff_ts" '
+            .artifacts[]
+            | select(.name | startswith("binary-") or .name == "models")
+            | select((.created_at | fromdateiso8601) < $cutoff)
+            | .id
+          ' | while read -r artifact_id; do
+            echo "Deleting artifact $artifact_id"
+            gh api repos/$REPO/actions/artifacts/$artifact_id -X DELETE
+          done
+
   build:
     needs: meta
     runs-on: ${{ matrix.os }}
@@ -75,7 +97,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install Bun
         uses: oven-sh/setup-bun@v2
@@ -114,14 +136,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: binary-*
           path: dist/
           merge-multiple: true
 
       - name: Download models
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: models
           path: dist/
