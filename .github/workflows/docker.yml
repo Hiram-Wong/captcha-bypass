@@ -69,12 +69,9 @@ jobs:
         run: |
           CUTOFF=${{ steps.cleanup.outputs.cutoff_ts }}
 
-          gh cache list \
-            --repo "$REPO" \
-            --limit 1000 \
-            --json id,key,lastAccessedAt \
+          gh api "repos/$REPO/actions/caches" --paginate \
             --jq "
-              .[]
+              .actions_caches[]
               | select(
                   (.key | startswith(\"buildkit-blob\"))
                   or (.key | endswith(\"docker.io-\"))
@@ -82,14 +79,16 @@ jobs:
                 )
               | select(
                   (
-                    .created_at
-                    | sub(\"\\.[0-9]+Z$\"; \"Z\")
+                    .created_at[0:19] + \"Z"
                     | fromdateiso8601
                   ) < $CUTOFF
                 )
               | .id
             " |
-          xargs -r -I {} gh cache delete {} --repo "$REPO" --confirm || true
+          xargs -r -I {} sh -c '
+            echo "Deleting cache {}"
+            gh api "repos/$REPO/actions/caches/{}" -X DELETE || true
+          '
 
       - name: Clean up stale artifacts
         run: |
