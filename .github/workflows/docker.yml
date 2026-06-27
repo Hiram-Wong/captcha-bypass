@@ -53,26 +53,50 @@ jobs:
           echo "description=$DESC" >> "$GITHUB_OUTPUT"
 
   cleanup:
-    needs: meta
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clean up stale BuildKit caches
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          cutoff_ts=$(date -d "7 days ago" +%s)
+  needs: meta
+  runs-on: ubuntu-latest
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    REPO: ${{ github.repository }}
+    CUTOFF_TS: ${{ steps.cleanup.outputs.cutoff_ts }}
 
-          gh api repos/$REPO/actions/caches --paginate | \
-          jq -r --argjson cutoff "$cutoff_ts" '
-            .actions_caches[]
-            | select(.key | startswith("buildkit-"))
-            | select((.last_accessed_at | fromdateiso8601) < $cutoff)
+  steps:
+    - name: Calculate cutoff time
+      id: cleanup
+      run: |
+        echo "cutoff_ts=$(date -u -d '7 days ago' +%s)" >> "$GITHUB_OUTPUT"
+
+    - name: Clean up stale caches
+      run: |
+        gh cache list \
+          --repo "$REPO" \
+          --limit 1000 \
+          --json id,key,lastAccessedAt \
+          --jq '
+            .[]
+            | select(
+                (.key | startswith("buildkit-blob"))
+                or (.key | endswith("docker.io-"))
+                or (.key | endswith("index-buildkit-"))
+              )
+            | select((.lastAccessedAt | fromdateiso8601) < '$(date -u -d "7 days ago" +%s)')
             | .id
-          ' | while read -r cache_id; do
-            echo "Deleting cache $cache_id"
-            gh api repos/$REPO/actions/caches/$cache_id -X DELETE
-          done
+          ' |
+        xargs -r -I {} gh cache delete {} --repo "$REPO" --confirm
+
+    - name: Clean up stale artifacts
+      run: |
+        gh api "repos/$REPO/actions/artifacts" --paginate \
+          --jq '
+            .artifacts[]
+            | select(.name | endswith(".dockerbuild"))
+            | select((.created_at | fromdateiso8601) < '${CUTOFF_TS}')
+            | .id
+          ' |
+        xargs -r -I {} sh -c '
+          echo "Deleting artifact {}"
+          gh api "repos/$REPO/actions/artifacts/{}" -X DELETE
+        '
 
   build-push:
     needs: meta

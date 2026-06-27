@@ -54,16 +54,20 @@ jobs:
         run: |
           cutoff_ts=$(date -d "7 days ago" +%s)
 
-          gh api repos/$REPO/actions/artifacts --paginate | \
-          jq -r --argjson cutoff "$cutoff_ts" '
-            .artifacts[]
-            | select(.name | startswith("binary-") or .name == "models")
-            | select((.created_at | fromdateiso8601) < $cutoff)
-            | .id
-          ' | while read -r artifact_id; do
-            echo "Deleting artifact $artifact_id"
-            gh api repos/$REPO/actions/artifacts/$artifact_id -X DELETE
-          done
+          gh api "repos/$REPO/actions/artifacts" --paginate \
+            --jq '
+              .artifacts[]
+              | select(
+                  (.name | startswith("binary-"))
+                  or (.name == "models")
+                )
+              | select((.created_at | fromdateiso8601) < '$cutoff_ts')
+              | .id
+            ' |
+          xargs -r -I {} sh -c '
+            echo "Deleting artifact {}"
+            gh api "repos/$REPO/actions/artifacts/{}" -X DELETE
+          '
 
   build:
     needs: meta
