@@ -1,4 +1,3 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import process from 'node:process';
@@ -13,6 +12,7 @@ import { ROOT_PATH } from '@/utils/path';
 interface LoggerOptions {
   dir?: string;
   enabled?: boolean;
+  maxFiles?: RotatingFileStreamOptions['maxFiles'];
   teeToStdout?: RotatingFileStreamOptions['teeToStdout'];
 }
 
@@ -58,36 +58,24 @@ const getSpanId = () => nanoid(8)();
 
 const createLogHistory = (type: string) => `.${type}_history.txt`;
 
-const createLogGenerator = (prefix: string) => (time?: Date | number | null, _index?: number) => {
+const createLogGenerator = (prefix: string) => (time?: Date | number | null, index?: number) => {
+  if (!time) return `${prefix}.log`;
+
   const date = dateFormat(time ?? new Date(), 'yyyy-mm-dd');
-  return `${prefix}-${date}.log`;
-  // return typeof index === 'undefined' || index <= 1 ? `${prefix}-${date}.log` : `${prefix}-${date}.${index}.log`;
+  return typeof index === 'undefined' || index <= 1 ? `${prefix}-${date}.log` : `${prefix}-${date}.${index}.log`;
+  // return `${prefix}-${date}.log`;
 };
 
-const initHistory = (logDir: string, fileName: string, prefix: string): void => {
-  const historyPath = resolve(logDir, fileName);
-  const currentLog = resolve(logDir, createLogGenerator(prefix)());
-
-  if (!existsSync(historyPath)) {
-    writeFileSync(historyPath, currentLog + '\n');
-    return;
-  }
-
-  const lines = readFileSync(historyPath, 'utf-8').trim().split('\n').filter(Boolean);
-  if (lines.includes(currentLog)) return;
-
-  writeFileSync(historyPath, [...lines, currentLog].join('\n') + '\n');
-};
-
-export const requestLogger = ({ dir = 'logs', enabled = true, teeToStdout = false }: LoggerOptions = {}) => {
-  if (!enabled) return new Elysia({ name: 'requestLogger' });
-
+export const requestLogger = (options: LoggerOptions = {}) => {
+  const { enabled = true, dir = 'logs', maxFiles = 7, teeToStdout = false } = options;
   const logDir = resolve(ROOT_PATH, dir);
+
+  if (!enabled) return new Elysia({ name: 'requestLogger' });
 
   const rfsOptions: RfsOptions = {
     interval: '1d',
     intervalBoundary: true,
-    maxFiles: 7,
+    maxFiles,
     path: logDir,
     teeToStdout,
   };
@@ -104,12 +92,8 @@ export const requestLogger = ({ dir = 'logs', enabled = true, teeToStdout = fals
     history: errorHistoryFile,
   });
 
-  accessStream.on('open', () => initHistory(logDir, accessHistoryFile, 'access'));
-  errorStream.on('open', () => initHistory(logDir, errorHistoryFile, 'error'));
-
   const write = (stream: NodeJS.WritableStream, obj: unknown) => {
-    const ok = stream.write(JSON.stringify(obj) + '\n');
-    if (!ok) stream.once('drain', () => {});
+    stream.write(JSON.stringify(obj) + '\n');
   };
 
   return new Elysia({ name: 'logger' })

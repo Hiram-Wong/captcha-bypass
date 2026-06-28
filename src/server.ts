@@ -71,8 +71,10 @@ const setupServer = async (): Promise<void> => {
     )
     .use(
       requestLogger({
-        enabled: isPackaged,
         dir: 'logs',
+        enabled: isPackaged,
+        maxFiles: 7,
+        // teeToStdout: !isPackaged,
       }),
     )
     .onError(({ code, error, status }) => {
