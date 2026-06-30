@@ -1,7 +1,7 @@
-import fs from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { JSON5 } from 'bun';
+import { CryptoHasher, file, JSON5, write } from 'bun';
 import { InferenceSession, Tensor, env as ortEnv } from 'onnxruntime-web';
 
 import { ROOT_PATH } from '@/utils/path';
@@ -18,8 +18,16 @@ type OrtRunResult = {
 };
 
 const FILES = [
-  { name: 'ort-wasm-simd-threaded.wasm', source: wasmBin },
-  { name: 'ort-wasm-simd-threaded.mjs', source: mjsBin },
+  {
+    name: 'ort-wasm-simd-threaded.wasm',
+    source: wasmBin,
+    hash: 'd1ab1b94b16a65b29d710d0b587b29e7bed336827577623913479b8afe8113e6',
+  },
+  {
+    name: 'ort-wasm-simd-threaded.mjs',
+    source: mjsBin,
+    hash: '0a1e718d99c41b22c21f2520ff4f9e883a6b5533856e398d21816ee8eb8185d3',
+  },
 ] as const;
 
 class OrtWasmManager {
@@ -37,19 +45,27 @@ class OrtWasmManager {
   async releaseWasm(): Promise<void> {
     if (this.isMountWasm === true) return;
 
-    const basePathExists = await fs
-      .stat(this.releaseDir)
-      .then(() => true)
-      .catch(() => false);
-    if (!basePathExists) await fs.mkdir(this.releaseDir, { recursive: true });
-
-    for (const { name, source } of FILES) {
-      const dest = resolve(this.releaseDir, name);
-      try {
-        await fs.access(dest);
-      } catch {
-        await fs.writeFile(dest, await fs.readFile(source));
+    const baseFile = file(this.releaseDir);
+    try {
+      const stats = await baseFile.stat();
+      if (!stats.isDirectory()) {
+        await rm(this.releaseDir, { recursive: true, force: true });
+        await mkdir(this.releaseDir, { recursive: true });
       }
+    } catch {
+      await mkdir(this.releaseDir, { recursive: true });
+    }
+
+    for (const { name, source, hash } of FILES) {
+      const dest = resolve(this.releaseDir, name);
+      const destFile = Bun.file(dest);
+
+      if (await destFile.exists()) {
+        const destHash = new CryptoHasher('sha256').update(await destFile.bytes()).digest('hex');
+        if (destHash === hash) continue;
+      }
+
+      await write(dest, await file(source).bytes());
     }
 
     this.isMountWasm = true;
@@ -103,7 +119,7 @@ export class BaseOrtservice {
     this.session = await InferenceSession.create(model as any, options);
   }
 
-  async loadCharset(input: string): Promise<void> {
+  loadCharset(input: string): void {
     if (!input) throw new Error('Charset is empty');
 
     let charset: string[] = [];

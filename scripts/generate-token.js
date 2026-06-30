@@ -1,4 +1,4 @@
-import crypto from 'node:crypto';
+import { CryptoHasher } from 'bun';
 import 'dotenv/config';
 
 const parseAuthType = (value) => {
@@ -12,9 +12,9 @@ const parseAuthType = (value) => {
 
 const makeTimestampToken = (key) => {
   const ts = Math.floor(Date.now() / 1000).toString();
-  const nonce = crypto.randomBytes(16).toString('hex');
+  const nonce = Array.from({ length: 32 }, () => Math.floor(Math.random() * 36).toString(36)).join('');
   const data = `${ts}:${nonce}:${key}`;
-  const sig = crypto.createHash('md5').update(data).digest('hex');
+  const sig = new CryptoHasher('md5').update(data).digest('hex');
 
   return `${ts}:${nonce}:${sig}`;
 };

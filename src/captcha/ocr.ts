@@ -1,7 +1,7 @@
-import fs from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { ModelMessage } from 'ai';
+import { file } from 'bun';
 import { Jimp } from 'jimp';
 import { Tensor } from 'onnxruntime-web';
 
@@ -142,19 +142,14 @@ class OcrOrtCaptchaService extends BaseOrtservice {
     const modelPath = resolve(ROOT_PATH, config.ocr.modelPath);
     const charsetPath = resolve(ROOT_PATH, config.ocr.charsetPath);
 
-    try {
-      await fs.access(modelPath);
-      await fs.access(charsetPath);
-    } catch {
-      throw new Error('ONNX model or charset file not found');
-    }
+    const [modelExists, charsetExists] = await Promise.all([file(modelPath).exists(), file(charsetPath).exists()]);
+    if (!modelExists) throw new Error('OCR model not found');
+    if (!charsetExists) throw new Error('OCR charset file not found');
 
-    // const model = await fs.readFile(modelPath);
-    // await this.loadModel(model);
     await this.loadModel(modelPath);
 
-    const charset = await fs.readFile(charsetPath, 'utf-8');
-    await this.loadCharset(charset);
+    const charsetText = await file(charsetPath).text();
+    this.loadCharset(charsetText);
 
     if (config.ocr.charsetRanges) this.setRanges(config.ocr.charsetRanges.split(''));
   }

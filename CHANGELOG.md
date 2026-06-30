@@ -3,6 +3,7 @@
 - 特性: 增加 favicon.ico 和 robots.txt
 - 优化: 适配 opencv 5.x
 - 优化: 适配 ai-sdk 7.x
+- 优化: 部分 node 方法使用 bun 替代
 - 修复: 请求日志中间件 流转后无法打开文件; 时间记录未根据时区环境变量
 - 修复: 授权中间件 缺失对nonce的校验
 

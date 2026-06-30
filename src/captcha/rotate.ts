@@ -1,6 +1,6 @@
-import fs from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import { file } from 'bun';
 import { Jimp } from 'jimp';
 import { Tensor } from 'onnxruntime-web';
 import type { MinMaxLoc } from '@techstark/opencv-js';
@@ -29,14 +29,9 @@ class RotateOrtCaptchaService extends BaseOrtservice {
   public async init(): Promise<void> {
     const modelPath = resolve(ROOT_PATH, config.rotate.modelPath);
 
-    try {
-      await fs.access(modelPath);
-    } catch {
-      throw new Error('ONNX model not found');
-    }
+    const modelExists = await file(modelPath).exists();
+    if (!modelExists) throw new Error('Rotate model file not found');
 
-    // const model = await fs.readFile(modelPath);
-    // await this.loadModel(model);
     await this.loadModel(modelPath);
   }
 
