@@ -1,17 +1,26 @@
 import { resolve } from 'node:path';
 
+import { file } from 'bun';
 import { Elysia } from 'elysia';
 
 import { PUBLIC_PATH } from '@/utils/path';
+import { fail } from '@/utils/response';
 
 export const otherController = new Elysia({ name: 'other' }).group('', (app) =>
   app
     .get(
       '/favicon.ico',
-      ({ set }) => {
-        set.headers['Cache-Control'] = 'public, max-age=31536000, immutable, no-transform';
+      async ({ set }) => {
+        const assetPath = resolve(PUBLIC_PATH, 'favicon.ico');
+        const assetFile = file(assetPath);
+        if (!await assetFile.exists()) {
+          set.status = 404;
+          return fail('favicon.ico not found');
+        }
+
+        set.headers['Cache-Control'] = 'max-age=604800';
         set.headers['Content-Type'] = 'image/x-icon';
-        return Bun.file(resolve(PUBLIC_PATH, 'favicon.ico'));
+        return assetFile;
       },
       {
         detail: { hide: true },
@@ -19,9 +28,17 @@ export const otherController = new Elysia({ name: 'other' }).group('', (app) =>
     )
     .get(
       '/robots.txt',
-      ({ set }) => {
+      async ({ set }) => {
+        const assetPath = resolve(PUBLIC_PATH, 'robots.txt');
+        const assetFile = file(assetPath);
+        if (!await assetFile.exists()) {
+          set.status = 404;
+          return fail('robots.txt not found');
+        }
+
+        set.headers['Cache-Control'] = 'max-age=604800';
         set.headers['Content-Type'] = 'text/plain';
-        return Bun.file(resolve(PUBLIC_PATH, 'robots.txt'));
+        return assetFile;
       },
       {
         detail: { hide: true },
