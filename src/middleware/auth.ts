@@ -1,5 +1,6 @@
-import crypto from 'node:crypto';
+import { timingSafeEqual } from 'node:crypto';
 
+import { CryptoHasher } from 'bun';
 import { Elysia } from 'elysia';
 
 import { config } from '@/config';
@@ -13,20 +14,18 @@ const {
 const authEnabled = AUTH_TYPE !== 0;
 
 const verifyToken = (token: string, deadline = 3): boolean => {
-  const parts = token.split(':');
-  if (parts.length !== 3) return false;
+  const [tsStr, nonce, sig] = token.split(':');
+  if (!tsStr || !nonce || !sig) return false;
+  if (nonce.length !== 32) return false;
 
-  const [tsStr, nonce, sig] = parts;
-  const ts = parseInt(tsStr, 10);
-  if (Number.isNaN(ts) || Math.abs(Math.floor(Date.now() / 1000) - ts) > deadline * 60) {
-    return false;
-  }
+  const ts = +tsStr;
+  if (Number.isNaN(ts) || Math.abs((Date.now() / 1000 - ts) | 0) > deadline * 60) return false;
 
-  const data = `${tsStr}:${nonce}:${AUTH_KEY}`;
-  const expectedSig = crypto.createHash('md5').update(data).digest('hex');
+  const expected = new CryptoHasher('md5').update(`${tsStr}:${nonce}:${AUTH_KEY}`).digest();
+  const actual = Buffer.from(sig, 'hex');
 
   try {
-    return crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expectedSig, 'hex'));
+    return actual.length === expected.length && timingSafeEqual(actual, expected);
   } catch {
     return false;
   }
