@@ -32,6 +32,8 @@ No authentication required. Returns service health and version.
 {
   "status": 0,
   "data": {
+    "name": "captcha-bypass",
+    "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
     "version": "1.0.9",
     "timestamp": 1781719500449
   },

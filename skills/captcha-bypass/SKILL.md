@@ -23,7 +23,7 @@ The service starts at `http://127.0.0.1:7788`. Verify with:
 
 ```bash
 curl http://127.0.0.1:7788/health
-# → {"status":0,"data":{"version":"1.0.9","timestamp":...},"msg":"success"}
+# → {"status":0,"data":{"name":"captcha-bypass","homepage":"https://github.com/Hiram-Wong/captcha-bypass","version":"x.x.x","timestamp":...},"msg":"success"}
 ```
 
 If the service is already running, skip the start step and call the API directly.
@@ -204,10 +204,10 @@ curl -X POST 'http://127.0.0.1:7788/mcp' \
 
 ### 6. Health Check — `GET /health`
 
-No authentication required.
+No authentication required. Returns service metadata including app name, homepage, version, and current timestamp.
 
 ```json
-{ "status": 0, "data": { "version": "1.0.9", "timestamp": "..." }, "msg": "success" }
+{ "status": 0, "data": { "name": "captcha-bypass", "homepage": "https://github.com/Hiram-Wong/captcha-bypass", "version": "1.0.9", "timestamp": 1781719500449 }, "msg": "success" }
 ```
 
 ## Image Input Formats
