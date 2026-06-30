@@ -29,20 +29,23 @@
 
 #### 方式一：二进制 + 模型（推荐）
 
-1. 从 [Releases](https://github.com/Hiram-Wong/captcha-bypass/releases) 下载对应平台的二进制和模型文件。
-2. 将二进制和 `models/` 目录放在同一文件夹下：
+1. 从 [Releases](https://github.com/Hiram-Wong/captcha-bypass/releases) 下载对应平台的二进制文件（如 `captcha-bypass-mac-arm64`）和 `models.zip` 模型文件 以及 `public.zip` 静态资源。
+2. 将二进制与 `models/` `public/` 放在同一目录，结构如下：
 
 ```
 captcha-bypass/
-├── captcha-bypass-mac-arm64   # 二进制（按实际平台选择）
-└── models/
-    ├── detect.onnx
-    ├── ocr.onnx
-    ├── ocr.json
-    └── rotate.onnx
+├── captcha-bypass-mac-arm64   # 按实际平台替换
+├── models/
+│   ├── detect.onnx
+│   ├── ocr.onnx
+│   ├── ocr.json
+│   └── rotate.onnx
+└── public/                       # 可选，静态资源
+    ├── favicon.ico
+    └── robots.txt
 ```
 
-3. 配置环境变量后启动：
+3. 按需设置环境变量后启动（详见下方[环境变量](#环境变量)表）：
 
 ```bash
 # macOS / Linux
@@ -50,7 +53,7 @@ chmod +x captcha-bypass-mac-arm64
 ./captcha-bypass-mac-arm64
 
 # Windows
-./captcha-bypass-win-x64.exe
+.\captcha-bypass-win-x64.exe
 ```
 
 > 模型文件通过环境变量指定；不设置时默认加载二进制同级 `models/` 目录下的对应文件。
