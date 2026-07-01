@@ -1,3 +1,7 @@
+## 1.1.0
+
+- 特性: 支持 cli 模式
+
 ## 1.0.9
 
 - 特性: 增加 favicon.ico 和 robots.txt
