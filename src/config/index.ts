@@ -16,10 +16,11 @@ const booleanSchema = t
   .Encode((value) => String(value));
 
 const envSchema = t.Object({
-  PORT: t.Numeric({ minimum: 1, maximum: 65535, multipleOf: 1 }),
-  OPENAPI_ENABLE: booleanSchema,
+  RUN_MODE: t.Optional(t.Enum({ cli: 'cli', server: 'server' }, { default: 'cli' })),
   NODE_ENV: t.Enum({ development: 'development', production: 'production' }),
   LOG_LEVEL: t.Enum({ silly: 'silly', debug: 'debug', info: 'info', warn: 'warn', error: 'error' }),
+  PORT: t.Numeric({ minimum: 1, maximum: 65535, multipleOf: 1 }),
+  OPENAPI_ENABLE: booleanSchema,
   AUTH_KEY: t.String(),
   AUTH_TYPE: t.Numeric({ minimum: 0, maximum: 2, multipleOf: 1 }),
   DETECT_MODEL_PATH: t.String(),
@@ -36,10 +37,14 @@ const envSchema = t.Object({
 type Env = Static<typeof envSchema>;
 
 const envDefaults = {
-  PORT: 7788,
-  OPENAPI_ENABLE: false,
+  RUN_MODE: 'cli',
   NODE_ENV: 'development',
   LOG_LEVEL: 'info',
+
+  // server
+  PORT: 7788,
+  OPENAPI_ENABLE: false,
+
   // auth
   AUTH_KEY: '',
   AUTH_TYPE: 0,
@@ -87,10 +92,13 @@ const parseEnv = (): Env => {
 const env = parseEnv();
 
 export const config = {
-  port: env.PORT,
-  openapiEnable: env.OPENAPI_ENABLE,
+  runMode: env.RUN_MODE,
   nodeEnv: env.NODE_ENV,
   logLevel: env.LOG_LEVEL,
+  server: {
+    port: env.PORT,
+    openapiEnable: env.OPENAPI_ENABLE,
+  },
   auth: {
     key: env.AUTH_KEY,
     type: env.AUTH_TYPE,

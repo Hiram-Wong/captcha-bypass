@@ -17,8 +17,8 @@ export const loggerStartFail = (err: any) => {
 
 export const loggerInfo = () => {
   logger.raw(`${'='.repeat(27)} 信息 ${'='.repeat(27)}`);
-  logger.raw(`地址: http://127.0.0.1:${config.port}`);
-  if (config.openapiEnable) logger.raw(`文档: http://127.0.0.1:${config.port}/docs`);
+  logger.raw(`地址: http://127.0.0.1:${config.server.port}`);
+  if (config.server.openapiEnable) logger.raw(`文档: http://127.0.0.1:${config.server.port}/docs`);
   logger.raw(`项目: ${WEBSITE_URL}`);
   logger.raw(`版本: ${APP_VERSION} | 系统: ${os.platform()} | 架构: ${os.arch()}`);
   logger.raw('='.repeat(60));

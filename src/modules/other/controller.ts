@@ -13,7 +13,7 @@ export const otherController = new Elysia({ name: 'other' }).group('', (app) =>
       async ({ set }) => {
         const assetPath = resolve(PUBLIC_PATH, 'favicon.ico');
         const assetFile = file(assetPath);
-        if (!await assetFile.exists()) {
+        if (!(await assetFile.exists())) {
           set.status = 404;
           return fail('favicon.ico not found');
         }
@@ -31,7 +31,7 @@ export const otherController = new Elysia({ name: 'other' }).group('', (app) =>
       async ({ set }) => {
         const assetPath = resolve(PUBLIC_PATH, 'robots.txt');
         const assetFile = file(assetPath);
-        if (!await assetFile.exists()) {
+        if (!(await assetFile.exists())) {
           set.status = 404;
           return fail('robots.txt not found');
         }

@@ -1,21 +1,19 @@
-import type { ImageInput } from '@/types/shared.js';
+import { file } from 'bun';
+
+import type { ImageInput } from '@/types/shared';
 import { isBufferedFile, isHttp, isImageMime, isWebFile } from './validate';
 
 export const toImageBase64 = async (data: ImageInput): Promise<string> => {
   // Buffered upload file
   if (isBufferedFile(data)) {
-    if (!isImageMime(data.mimetype)) {
-      throw new Error('上传文件不是图片');
-    }
+    if (!isImageMime(data.mimetype)) throw new Error('上传文件不是图片');
 
     return `data:${data.mimetype};base64,${data.buffer.toString('base64')}`;
   }
 
   // FormData File
   if (isWebFile(data)) {
-    if (!isImageMime(data.type)) {
-      throw new Error('上传文件不是图片');
-    }
+    if (!isImageMime(data.type)) throw new Error('上传文件不是图片');
 
     const buffer = await data.arrayBuffer();
     return `data:${data.type};base64,${Buffer.from(buffer).toString('base64')}`;
@@ -40,16 +38,23 @@ export const toImageBase64 = async (data: ImageInput): Promise<string> => {
     return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
   }
 
-  if (typeof data !== 'string') {
-    throw new Error('不支持的图片数据类型');
+  // Local
+  const localFile = file(data as string);
+  if (await localFile.exists()) {
+    const buffer = await localFile.arrayBuffer();
+    const mime = localFile.type;
+    return `data:${mime};base64,${Buffer.from(buffer).toString('base64')}`;
   }
 
-  // base64（无前缀补全）
-  if (!data.includes('base64,')) {
-    return `data:image/png;base64,${data}`;
+  // Base64
+  if (typeof data === 'string') {
+    if (!data.includes('base64,')) {
+      return `data:image/png;base64,${data}`;
+    }
+    return data;
   }
 
-  return data;
+  throw new Error('不支持的图片数据类型');
 };
 
 export const base64ToMediaType = (base64: string): string => {

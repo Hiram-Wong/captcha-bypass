@@ -2,7 +2,7 @@ import process from 'node:process';
 
 import { cors } from '@elysia/cors';
 import { openapi } from '@elysia/openapi';
-import { JSON5 } from 'bun';
+import { JSON5, main } from 'bun';
 import { Elysia } from 'elysia';
 
 import { BaseCvService } from '@/captcha/base/cv';
@@ -53,7 +53,7 @@ const setupServer = async (): Promise<void> => {
     )
     .use(
       openapi({
-        enabled: config.openapiEnable,
+        enabled: config.server.openapiEnable,
         documentation: {
           info: {
             title: `${APP_NAME} API`,
@@ -104,7 +104,7 @@ const setupServer = async (): Promise<void> => {
     .use(mcpController)
     .use(healthController)
     .use(otherController)
-    .listen(config.port);
+    .listen(config.server.port);
 };
 
 const startServer = async (): Promise<void> => {
@@ -120,5 +120,9 @@ const startServer = async (): Promise<void> => {
     process.exit(1);
   }
 };
+
+if (import.meta.path === main) {
+  void startServer();
+}
 
 export { startServer };
