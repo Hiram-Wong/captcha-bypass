@@ -4,10 +4,11 @@
 
 | Env Variable         | Type    | Default     | Description                                                     |
 | -------------------- | ------- | ----------- | --------------------------------------------------------------- |
-| `PORT`               | number  | 7788        | Service port                                                    |
-| `OPENAPI_ENABLE`     | boolean | false       | Enable Swagger UI at `/docs`                                    |
+| `RUN_MODE`           | string  | cli         | Running mode<br>`cli` (command line) or `server` (HTTP API)      |
 | `NODE_ENV`           | string  | development | `development`, or `production`                                  |
 | `LOG_LEVEL`          | string  | info        | Log level<br>`silly` < `debug` < `info` < `warn` < `error`      |
+| `PORT`               | number  | 7788        | Service port (server mode only)                                  |
+| `OPENAPI_ENABLE`     | boolean | false       | Enable Swagger UI at `/docs`                                    |
 | `AUTH_TYPE`          | 0\|1\|2 | 0           | Auth type<br>0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
 | `AUTH_KEY`           | string  | ""          | Auth key<br>Used when AUTH_TYPE=1 or 2                          |
 | `DETECT_MODEL_PATH`  | string  | ""          | Detect model path<br>Defaults to `models/detect.onnx` if empty  |
@@ -397,11 +398,31 @@ All endpoints accept images in three formats:
 
 1. **Base64 string** — With or without data URI prefix (`data:image/png;base64,...`). Plain base64 is auto-prefixed as PNG.
 2. **URL** — Any HTTP/HTTPS URL. The service downloads the image with a 10-second timeout. Must have an image MIME type in the `Content-Type` response header.
-3. **File upload** — Multipart form data with an image file. Must have an image MIME type (e.g., `image/png`, `image/jpeg`, `image/gif`, `image/webp`).
+3. **File upload** — Multipart form data with an image file. Must have an image MIME type (e.g., `image/png`, `image/jpeg`, `image/webp`).
 
-Supported formats: PNG, JPEG, GIF, WebP, BMP, TIFF.
+Supported formats: PNG, JPEG, WebP, BMP, TIFF.
 
 ## Running the Service
+
+### CLI Mode
+
+> The code default is `cli`, but if `.env` sets `RUN_MODE=server`, that takes priority. Override it on the command line or remove from `.env`.
+
+```bash
+# Override .env
+# macOS / Linux:
+RUN_MODE=cli ./captcha-bypass ocr --type text --bg ./captcha.png
+# Windows:
+set RUN_MODE=cli && .\captcha-bypass.exe ocr --type text --bg ./captcha.png
+
+# Or via bun
+RUN_MODE=cli bun cli -- ocr --type text --bg ./captcha.png
+```
+> **Platform**: On **Windows**, replace `./captcha-bypass` with `.\captcha-bypass.exe`, and use `set VAR=val && ...` instead of `VAR=val ...`.
+
+### Server Mode
+
+Set `RUN_MODE=server` in `.env`, then:
 
 ```bash
 # Development (with hot reload)

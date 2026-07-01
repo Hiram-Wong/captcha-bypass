@@ -9,10 +9,12 @@ services:
       - '7788:7788'
     environment:
       - TZ=Asia/Shanghai
+      - RUN_MODE=server
     volumes:
+      - ./data/.env:/app/.env
       - ./data/logs:/app/logs
       - ./data/models:/app/models
-      - ./data/.env:/app/.env
+      - ./data/public:/app/public
     restart: always
     healthcheck:
       test: ['CMD-SHELL', 'curl -fsS http://localhost:7788/health || exit 1']

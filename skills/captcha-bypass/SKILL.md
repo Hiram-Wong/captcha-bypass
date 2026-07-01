@@ -1,32 +1,61 @@
 ---
 name: captcha-bypass
-description: This skill provides capabilities for solving CAPTCHA challenges including OCR text/math captchas, slide captchas, rotate captchas, and object detection captchas. Also provides an MCP SSE endpoint for AI agent integration. It should be used when the task involves recognizing, bypassing, or solving any type of CAPTCHA — including text-based verification codes, arithmetic captchas, slider puzzles, rotate-to-align challenges, and YOLO-based object detection. The skill wraps a local HTTP service that performs all inference on-device using ONNX models and OpenCV, no external API calls required.
+description: This skill provides capabilities for solving CAPTCHA challenges including OCR text/math captchas, slide captchas, rotate captchas, and object detection captchas. Supports both CLI mode (direct command-line invocation) and Server mode (HTTP API + MCP endpoint for AI agent integration). It should be used when the task involves recognizing, bypassing, or solving any type of CAPTCHA — including text-based verification codes, arithmetic captchas, slider puzzles, rotate-to-align challenges, and YOLO-based object detection. The skill runs all inference on-device using ONNX models and OpenCV, no external API calls required.
 ---
 
 # Captcha Bypass
 
 ## Overview
 
-This project provides a self-hosted HTTP microservice for solving four major types of CAPTCHA challenges:
-OCR text/math captchas, rotate-to-align captchas, slide/puzzle captchas, and YOLO object detection captchas. Also exposes an MCP SSE endpoint for AI agent integration. All inference runs locally using ONNX deep learning models and OpenCV.js image processing — no GPU or external API dependency.
+This project provides a self-hosted service for solving four major types of CAPTCHA challenges:
+OCR text/math captchas, rotate-to-align captchas, slide/puzzle captchas, and YOLO object detection captchas.
+All inference runs locally using ONNX deep learning models and OpenCV.js image processing — no GPU or external API dependency.
+
+**Two running modes** (set via `RUN_MODE` env, code default `cli`):
+
+- **CLI mode** — Direct command-line invocation, outputs JSON to stdout. Best for scripting and one-shot recognition.
+- **Server mode** — HTTP API on `http://127.0.0.1:7788` with REST endpoints and an MCP endpoint for AI agent integration.
+
+> The code default is `cli`, but if `.env` sets `RUN_MODE=server`, that takes priority. Check `.env` to verify the actual mode.
 
 ## Quick Start
 
-To start the service:
+### CLI Mode
+
+To use CLI mode, ensure `.env` does NOT set `RUN_MODE=server`, or override on the command line:
 
 ```bash
-cp .env.example .env  # first time only
+# Ensure CLI mode (overrides .env)
+# macOS / Linux:
+RUN_MODE=cli ./captcha-bypass ocr --type text --bg ./captcha.png
+# Windows:
+set RUN_MODE=cli && .\captcha-bypass.exe ocr --type text --bg ./captcha.png
+
+# Or simply remove/comment RUN_MODE from .env,
+# then run commands directly:
+./captcha-bypass ocr --type text --bg ./captcha.png
+./captcha-bypass ocr --type math --bg ./captcha.png --action ai
+./captcha-bypass slide --type match --bg ./bg.png --thumb ./slider.png
+./captcha-bypass --help
+```
+> **Platform**: On **Windows**, replace `./captcha-bypass` with `.\captcha-bypass.exe`, and use `set VAR=val && ...` instead of `VAR=val ...` for environment variables.
+
+Images support local file path, HTTP URL, and Base64 input.
+
+### Server Mode
+
+If `.env` has `RUN_MODE=server`, the binary starts as HTTP service:
+
+```bash
 bun run dev           # or: bun src/index.ts
 ```
 
-The service starts at `http://127.0.0.1:7788`. Verify with:
+Verify with:
 
 ```bash
 curl http://127.0.0.1:7788/health
 # → {"status":0,"data":{"name":"captcha-bypass","homepage":"https://github.com/Hiram-Wong/captcha-bypass","version":"x.x.x","timestamp":...},"msg":"success"}
 ```
-
-If the service is already running, skip the start step and call the API directly.
 
 ## API Endpoints
 
@@ -59,23 +88,16 @@ Recognize text-based or arithmetic CAPTCHA images.
 **Example calls:**
 
 ```bash
-# Text captcha with character filter
+# === Server mode (curl) ===
 curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -H 'Content-Type: application/json' \
   -d '{"type":"text","action":"onnx","bg":"https://example.com/captcha.png","range":"0123456789"}'
 
-# Math captcha with range filter (improves accuracy by narrowing decoder charset)
-curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
-  -H 'Content-Type: application/json' \
-  -d '{"type":"math","action":"onnx","bg":"data:image/png;base64,iVBORw0KGgo...","range":"0123456789+-*/"}'
-
-# File upload (multipart)
-curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
-  -F 'type=text' \
-  -F 'action=onnx' \
-  -F 'bg=@captcha.png' \
-  -F 'range=0123456789'
+# === CLI mode ===
+./captcha-bypass ocr --type text --bg https://example.com/captcha.png --range 0123456789
+./captcha-bypass ocr --type math --bg ./captcha.png --action ai
 ```
+
 
 ### 2. Rotate Captcha — `POST /captcha/rotate`
 
@@ -101,13 +123,14 @@ Determine the rotation angle needed to align a rotated image.
 **Example calls:**
 
 ```bash
+# === Server mode (curl) ===
 curl -X POST 'http://127.0.0.1:7788/captcha/rotate' \
   -H 'Content-Type: application/json' \
   -d '{"type":"single","bg":"https://example.com/rotated.png"}'
 
-curl -X POST 'http://127.0.0.1:7788/captcha/rotate' \
-  -H 'Content-Type: application/json' \
-  -d '{"type":"nox","thumb":"https://example.com/rotated.png","bg":"https://example.com/bg.png"}'
+# === CLI mode ===
+./captcha-bypass rotate --type single --bg ./rotated.png
+./captcha-bypass rotate --type nox --bg ./bg.png --thumb ./thumb.png
 ```
 
 ### 3. Slide Captcha — `POST /captcha/slide`
@@ -134,9 +157,13 @@ Find the position where a slider piece fits into a background image.
 **Example calls:**
 
 ```bash
+# === Server mode (curl) ===
 curl -X POST 'http://127.0.0.1:7788/captcha/slide' \
   -H 'Content-Type: application/json' \
   -d '{"type":"match","thumb":"https://example.com/slider.png","bg":"https://example.com/bg.png"}'
+
+# === CLI mode ===
+./captcha-bypass slide --type match --bg ./bg.png --thumb ./slider.png
 ```
 
 ### 4. Detection Captcha — `POST /captcha/detect`
@@ -172,20 +199,19 @@ Detect objects in captcha images using YOLO-style object detection, or match thu
 **Example calls:**
 
 ```bash
-# Single-image detection
+# === Server mode (curl) ===
 curl -X POST 'http://127.0.0.1:7788/captcha/detect' \
   -H 'Content-Type: application/json' \
   -d '{"type":"detect","bg":"https://example.com/captcha.png"}'
 
-# Two-image match (bg as candidates, thumb as reference)
-curl -X POST 'http://127.0.0.1:7788/captcha/detect' \
-  -H 'Content-Type: application/json' \
-  -d '{"type":"match","bg":"https://example.com/bg.png","thumb":"https://example.com/thumb.png"}'
+# === CLI mode ===
+./captcha-bypass detect --type detect --bg ./captcha.png
+./captcha-bypass detect --type match --bg ./bg.png --thumb ./thumb.png
 ```
 
 ### 5. MCP (Model Context Protocol) — `POST /mcp`
 
-MCP Streamable HTTP endpoint for AI agent integration. Supports 4 tools: `ocr`, `rotate`, `slide`, `detect`.
+> Server mode only. MCP Streamable HTTP endpoint for AI agent integration. Supports 4 tools: `ocr`, `rotate`, `slide`, `detect`.
 
 **Usage (single endpoint, no SSE, no sessions):**
 
@@ -235,20 +261,31 @@ Check `AUTH_TYPE` in `.env` first. If `AUTH_TYPE=0`, no auth header is needed.
 
 ## Tips for Calling from Code
 
-When writing scripts that call this service, always call `GET /health` first to verify the service is running.
-Use `fetch()` or `curl` to call endpoints. For file-based images, prefer the multipart upload approach:
+When writing scripts that call this service:
+
+- **CLI mode**: Use `child_process` or shell to invoke the binary and parse stdout JSON. Best for simple one-shot calls.
+- **Server mode**: Call the HTTP API. Always check `GET /health` first to verify the service is running.
+
+**CLI mode (Node.js/Bun):**
 
 ```javascript
+import { spawnSync } from 'node:child_process';
+const result = spawnSync('./captcha-bypass', ['ocr', '--type', 'text', '--bg', './captcha.png']);
+console.log(JSON.parse(result.stdout.toString()));
+// → { code: "AB3D" }
+```
+
+**Server mode (fetch):**
+
+```javascript
+// For file-based images, prefer multipart upload:
 const form = new FormData();
 form.append('type', 'text');
 form.append('bg', new Blob([imageBuffer], { type: 'image/png' }), 'captcha.png');
 const res = await fetch('http://127.0.0.1:7788/captcha/ocr', { method: 'POST', body: form });
 const result = await res.json();
-```
 
-For in-memory Base64 images, use JSON:
-
-```javascript
+// For in-memory Base64 images, use JSON:
 const res = await fetch('http://127.0.0.1:7788/captcha/ocr', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },

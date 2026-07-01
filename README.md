@@ -1,15 +1,19 @@
-<p align="center">
+<div align="center">
   <a href="https://github.com/Hiram-Wong/captcha-bypass">
     <img width="128" src="./docs/assets/icon.png">
-    <br>
   </a>
-</p>
+</div>
+
+<div align="center">
+  <p><b><font size="4"><i>Captcha Bypass</i></font></b></p>
+</div>
 
 <div align="center">
 
 [![][github-release-shield]][github-release-link]
 [![][github-license-shield]][github-license-link]
 [![][github-docker-shield]][github-docker-link]
+[![][platform-shield]]()
 
 </div>
 <div align="center">
@@ -21,39 +25,40 @@
 
 ## 📌 介绍
 
-基于 `onnxruntime-wasm` 实现跨平台 ONNX 模型推理，支持 Bun 编译为独立二进制，无需 GPU 即可运行。
+基于 `onnxruntime-wasm` 实现跨平台 ONNX 模型推理，通过 Bun 编译为独立二进制。提供 **CLI** 与 **HTTP Server** 两种运行模式。
 
 ## 📖 使用
 
-### 部署运行
+### 部署
 
-#### 方式一：二进制 + 模型（推荐）
+#### 方式一：二进制 + 模型
 
-1. 从 [Releases](https://github.com/Hiram-Wong/captcha-bypass/releases) 下载对应平台的二进制文件（如 `captcha-bypass-mac-arm64`）和 `models.zip` 模型文件 以及 `public.zip` 静态资源。
-2. 将二进制与 `models/` `public/` 放在同一目录，结构如下：
+1. 从 [Releases][github-release-link] 下载对应平台的`二进制文件` `models.zip` 模型文件 以及 `public.zip` 静态资源。
+2. 将二进制文件与 `models/` `public/` 放在同一目录，结构如下：
 
 ```
 captcha-bypass/
-├── captcha-bypass-mac-arm64   # 按实际平台替换
+├── captcha-bypass             # 按实际平台替换
 ├── models/
 │   ├── detect.onnx
 │   ├── ocr.onnx
 │   ├── ocr.json
 │   └── rotate.onnx
-└── public/                       # 可选，静态资源
+└── public/                    # 可选，静态资源
     ├── favicon.ico
     └── robots.txt
 ```
 
-3. 按需设置环境变量后启动（详见下方[环境变量](#环境变量)表）：
+3. 按需设置环境变量后启动：
 
 ```bash
-# macOS / Linux
-chmod +x captcha-bypass-mac-arm64
-./captcha-bypass-mac-arm64
+# Cli 模式
+RUN_MODE=cli ./captcha-bypass ocr --type text --bg https://example.com/captcha.png # Mac/Linux
+RUN_MODE=cli .\captcha-bypass ocr --type text --bg https://example.com/captcha.png # Windows
 
-# Windows
-.\captcha-bypass-win-x64.exe
+# Server 模式
+RUN_MODE=server ./captcha-bypass # Mac/Linux
+set RUN_MODE=server && .\captcha-bypass-win-x64.exe # Windows
 ```
 
 > 模型文件通过环境变量指定；不设置时默认加载二进制同级 `models/` 目录下的对应文件。
@@ -61,51 +66,63 @@ chmod +x captcha-bypass-mac-arm64
 #### 方式二：Docker
 
 ```bash
+# 拉取镜像
 docker pull ghcr.io/hiram-wong/captcha-bypass:latest
-docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
+
+# Cli 模式
+docker run --rm -e RUN_MODE=cli ghcr.io/hiram-wong/captcha-bypass:latest ocr --type text --bg https://example.com/captcha.png
+
+# Server 模式
+docker run -d -p 7788:7788 -e RUN_MODE=server ghcr.io/hiram-wong/captcha-bypass:latest
 ```
 
 > 模型已内置于镜像，无需额外挂载。通过 `-e` 传环境变量覆盖配置。
 
 ### 环境变量
 
-| 配置               | 类型                              | 默认值           | 说明                                                                |
-| :----------------- | :-------------------------------- | :--------------- | :------------------------------------------------------------------ |
-| PORT               | `number`                          | 7788             | 服务端口                                                            |
-| OPENAPI_ENABLE     | `boolean`                         | false            | 是否启用 OpenAPI 文档                                               |
-| NODE_ENV           | `"development"` \| `"production"` | development      | 运行环境                                                            |
-| LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` | info | 日志级别<br>从低到高：silly < debug < info < warn < error |
-| AUTH_TYPE          | `0` \| `1` \| `2`                 | 0                | 认证类型<br>0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)          |
-| AUTH_KEY           | `string`                          | 空字符串         | 认证密钥<br>AUTH_TYPE=1/2 时使用                                    |
-| DETECT_MODEL_PATH  | `string`                          | 空字符串         | Detect 模型文件路径<br>为空时加载 `models/detect.onnx`              |
-| OCR_MODEL_PATH     | `string`                          | 空字符串         | OCR 模型文件路径<br>为空时加载 `models/ocr.onnx`                    |
-| OCR_CHARSET_PATH   | `string`                          | 空字符串         | OCR 字符集文件路径<br>为空时加载 `models/ocr.json`                  |
-| OCR_CHARSET_RANGES | `string`                          | 空字符串         | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果   |
-| ROTATE_MODEL_PATH  | `string`                          | 空字符串         | ROTATE 模型文件路径<br>为空时加载 `models/rotate.onnx`              |
-| OPENAI_BASE_URL    | `string`                          | 空字符串         | OpenAI API 地址<br>仅支持 `/chat/completions`                      |
-| OPENAI_API_KEY     | `string`                          | 空字符串         | OpenAI API 密钥                                                     |
-| OPENAI_OCR_MODEL   | `string`                          | PaddleOCR-VL-1.6 | OCR 专用模型名称<br>推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR       |
-| OPENAI_MODEL       | `string`                          | gpt-5.5          | 通用模型名称                                                        |
+> Cli 与 Server 模式共用环境变量配置。
 
-### 请求地址
+| 配置               | 类型                                                        | 默认值           | 说明                                                              |
+| :----------------- | :---------------------------------------------------------- | :--------------- | :---------------------------------------------------------------- |
+| RUN_MODE           | `"cli"` \| `"server"`                                       | cli              | 运行模式<br>cli: 命令行；server: HTTP 服务                        |
+| NODE_ENV           | `"development"` \| `"production"`                           | development      | 运行环境                                                          |
+| LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` | info             | 日志级别<br>从低到高：silly < debug < info < warn < error         |
+| PORT               | `number`                                                    | 7788             | 服务端口（仅 server 模式）                                        |
+| OPENAPI_ENABLE     | `boolean`                                                   | false            | 是否启用 OpenAPI 文档（仅 server 模式）                           |
+| AUTH_TYPE          | `0` \| `1` \| `2`                                           | 0                | 认证类型<br>0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)        |
+| AUTH_KEY           | `string`                                                    | 空字符串         | 认证密钥<br>AUTH_TYPE=1/2 时使用                                  |
+| DETECT_MODEL_PATH  | `string`                                                    | 空字符串         | Detect 模型文件路径<br>为空时加载 `models/detect.onnx`            |
+| OCR_MODEL_PATH     | `string`                                                    | 空字符串         | OCR 模型文件路径<br>为空时加载 `models/ocr.onnx`                  |
+| OCR_CHARSET_PATH   | `string`                                                    | 空字符串         | OCR 字符集文件路径<br>为空时加载 `models/ocr.json`                |
+| OCR_CHARSET_RANGES | `string`                                                    | 空字符串         | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果 |
+| ROTATE_MODEL_PATH  | `string`                                                    | 空字符串         | ROTATE 模型文件路径<br>为空时加载 `models/rotate.onnx`            |
+| OPENAI_BASE_URL    | `string`                                                    | 空字符串         | OpenAI API 地址<br>仅支持 `/chat/completions`                     |
+| OPENAI_API_KEY     | `string`                                                    | 空字符串         | OpenAI API 密钥                                                   |
+| OPENAI_OCR_MODEL   | `string`                                                    | PaddleOCR-VL-1.6 | OCR 专用模型名称<br>推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR     |
+| OPENAI_MODEL       | `string`                                                    | gpt-5.5          | 通用模型名称                                                      |
 
-[http://127.0.0.1:7788](http://127.0.0.1:7788)
+### 参数说明
 
-### 接口简述
+> Cli 与 Server 模式共用参数体系。
 
-| 说明       | 接口              | 方法 | 参数                                                                                                     |
-| :--------- | :---------------- | :--- | :------------------------------------------------------------------------------------------------------- |
-| 目标检测   | `/captcha/detect` | POST | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                                              |
-| 文本验证码 | `/captcha/ocr`    | POST | type(必传): text / math<br>bg(必传)<br>action(可选, 默认 onnx): ai / onnx<br>range(可选): 识别字符集范围 |
-| 旋转验证码 | `/captcha/rotate` | POST | type(必传): single/ nox / tiktok<br>bg(必传)<br>thumb(nox/tiktok 必传)                                   |
-| 滑动验证码 | `/captcha/slide`  | POST | type(必传): match / comparison<br>thumb(必传)<br>bg(必传)                                                |
-| 健康检查   | `/health`         | GET  |                                                                                                          |
-| MCP 协议   | `/mcp`            | POST | Streamable HTTP 传输，body：JSON-RPC 2.0 消息（详见工具列表）                                            |
+| 说明       | 接口              | 方法 | 模式         | 参数                                                                                                     |
+| :--------- | :---------------- | :--- | :----------- | :------------------------------------------------------------------------------------------------------- |
+| 目标检测   | `/captcha/detect` | POST | CLI / Server | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                                              |
+| 文本验证码 | `/captcha/ocr`    | POST | CLI / Server | type(必传): text / math<br>bg(必传)<br>action(可选, 默认 onnx): ai / onnx<br>range(可选): 识别字符集范围 |
+| 旋转验证码 | `/captcha/rotate` | POST | CLI / Server | type(必传): single/ nox / tiktok<br>bg(必传)<br>thumb(nox/tiktok 必传)                                   |
+| 滑动验证码 | `/captcha/slide`  | POST | CLI / Server | type(必传): match / comparison<br>thumb(必传)<br>bg(必传)                                                |
+| 健康检查   | `/health`         | GET  | Server       |                                                                                                          |
+| MCP 协议   | `/mcp`            | POST | Server       | Streamable HTTP 传输，body：JSON-RPC 2.0 消息（详见工具列表）                                            |
 
 ### 调用说明
 
-- JSON: Content-Type: application/json (传 Base64 或 URL)
-- FORM: Content-Type: multipart/form-data (传 图片文件)
+- Cli:
+  - 图片: 支持Base64/URL/文件路径
+- Server:
+  - 授权: `Authorization: Bearer <token>`
+  - 图片:
+    - Base64/URL: `Content-Type: application/json`
+    - 文件: `Content-Type: multipart/form-data`
 
 <details>
 <summary>展开查看常见问题</summary>
@@ -113,14 +130,42 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 #### 识别不准确？
 
 - 使用onnx部分由模型决定的，请自行使用 [dddd_trainer](https://github.com/sml2h3/dddd_trainer) 工具训练特定场景专属数据模型。
-- 使用opencv部分为非通用场景, 特定场景需请自行完成算法完成匹配。
+- 使用opencv部分为非通用场景, 特定场景需请自行完成算法匹配。
 
-#### 算术题识别不准确？
+#### 算术识别不准确？
 
-- 算术计算也与模型挂钩。
+- 算术识别也与模型挂钩。
 - 只支持整数四则运算(加减乘除), 不支持其他运算(取余开方取余)等计算。
 - onnx: 对`+`和`*`错误率较高, 建议根据给出的公式手动替换符号再次计算。
-- ai: PaddleOCR(识别不错, 理解提示词不太行)、HunyuanOCR(识别和理解都还不错)、DeepSeek-OCR(没试过)
+- ai: 部分模型对提示词理解能力较差, 字符集范围不生效
+
+</details>
+
+<details>
+<summary>展开查看命令示例</summary>
+
+```bash
+./captcha-bypass -h # 帮助
+./captcha-bypass -V # 版本号
+
+# 文字
+./captcha-bypass ocr --type text --bg https://example.com/captcha.png
+./captcha-bypass ocr --type text --bg ./captcha.png --range 0123456789
+./captcha-bypass ocr --type math --action ai --bg "data:image/png;base64,..."
+
+# 目标
+./captcha-bypass detect --type detect --bg https://example.com/captcha.png
+./captcha-bypass detect --type match --bg ./bg.png --thumb ./thumb.png
+
+# 旋转
+./captcha-bypass rotate --type single --bg https://example.com/captcha.png
+./captcha-bypass rotate --type nox --bg ./bg.png --thumb ./thumb.png
+./captcha-bypass rotate --type tiktok --bg "data:image/png;base64,..." --thumb "data:image/png;base64,..."
+
+# 滑块
+./captcha-bypass slide --type match --bg https://example.com/bg.png --thumb https://example.com/thumb.png
+./captcha-bypass slide --type compare --bg ./bg.png --thumb ./thumb.png
+```
 
 </details>
 
@@ -134,7 +179,9 @@ curl -X POST 'http://127.0.0.1:7788/captcha/detect' -H 'Content-Type: multipart/
 -F 'type=detect' \
 -F 'bg=https://camo.githubusercontent.com/.../img/result2.jpg'
 # {"status":0,"data":[{"target":"data:image/png;base64,...","coordinate":{"x1":246,"y1":47,"x2":287,"y2":87}}, ...],"msg":"success"}
+```
 
+```bash
 curl -X POST 'http://127.0.0.1:7788/captcha/detect' -H 'Content-Type: multipart/form-data' \
 -F 'type=match' \
 -F 'bg=https://camo.githubusercontent.com/.../bg.jpg' \
@@ -263,10 +310,10 @@ curl -X POST 'http://127.0.0.1:7788/mcp' \
 > 安装[bun](https://bun.com/docs/installation)
 
 ```bash
-cp .env.example .env # 复制环境变量配置文件
-bun install # 安装依赖
-bun run dev # 开发模式
-bun run build:{platform}:{arch} # 构建二进制, 如: bun run build:darwin:arm64
+cp .env.example .env                 # 复制环境变量配置文件
+bun install                          # 安装依赖
+bun run dev/cli                      # 开发模式, server模式/cli模式
+bun run build:{platform}:{arch}      # 构建二进制, 如: bun run build:darwin:arm64
 ```
 
 ## 📄 许可
@@ -279,6 +326,17 @@ bun run build:{platform}:{arch} # 构建二进制, 如: bun run build:darwin:arm
 2. 风险自负: 任何因使用本项目而产生的法律责任、技术风险或经济损失，由使用者自行承担，项目作者不承担任何形式的责任。
 3. 禁止滥用: 不得将本项目用于违法牟利、黑产活动或其他不当商业用途。
 
+如果您发现该项目对您的研究有用，请考虑引用：
+
+```bibtex
+@misc{captcha-bypass,
+  title={Captcha Bypass},
+  author={Hiram Wong},
+  year={2026},
+  url={https://github.com/Hiram-Wong/captcha-bypass},
+}
+```
+
 ## 🙏 鸣谢
 
 - [onnxruntime-web](https://github.com/microsoft/onnxruntime-web) - 模型推理
@@ -288,7 +346,6 @@ bun run build:{platform}:{arch} # 构建二进制, 如: bun run build:darwin:arm
 - [JJBJJ](https://github.com/JJBJJ) - 双图Nox算法
 - [来一碗清茶(csdn)](https://blog.csdn.net/u011931957/article/details/147661195) - 双图Tiktok算法
 
-
 <!-- Links & Images -->
 
 [github-release-shield]: https://img.shields.io/github/v/release/Hiram-Wong/captcha-bypass?label=Release&logo=github
@@ -297,6 +354,7 @@ bun run build:{platform}:{arch} # 构建二进制, 如: bun run build:darwin:arm
 [github-docker-link]: https://github.com/Hiram-Wong/captcha-bypass/pkgs/container/captcha-bypass
 [github-license-shield]: https://img.shields.io/github/license/Hiram-Wong/captcha-bypass?label=License&logo=appveyor
 [github-license-link]: https://github.com/Hiram-Wong/captcha-bypass/blob/main/LICENSE
+[platform-shield]: https://img.shields.io/badge/OS-Linux%2C%20Win%2C%20Mac-blue.svg
 
 <!-- Links & Images -->
 
