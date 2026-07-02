@@ -48,66 +48,45 @@ export class DetectCaptchaService extends BaseOrtservice {
     size: { height: number; width: number };
     rawSize: { height: number; width: number };
   }> {
-    const TARGET_SIZE = [416, 416];
-    const [TARGET_WIDTH, TARGET_HEIGHT] = TARGET_SIZE;
+    const { shape, mean, std } = config.detect;
+    const [imgC, imgH, imgW] = shape;
 
     const image = await Jimp.read(Buffer.from(base64.replace(/^data:image\/\w+;base64,/, ''), 'base64'));
     const { width: rawWidth, height: rawHeight } = image.bitmap;
 
-    const ratio = Math.min(TARGET_WIDTH / rawWidth, TARGET_HEIGHT / rawHeight);
-    const newWidth = Math.round(rawWidth * ratio);
-    const newHeight = Math.round(rawHeight * ratio);
+    const ratio = Math.min(imgW / rawWidth, imgH / rawHeight);
+    const resizedW = Math.round(rawWidth * ratio);
+    const resizedH = Math.round(rawHeight * ratio);
 
-    // 缩放
-    image.resize({ w: newWidth, h: newHeight });
+    image.resize({ w: resizedW, h: resizedH });
 
     const { data, width, height } = image.bitmap;
-    const channelSize = TARGET_WIDTH * TARGET_HEIGHT;
-    const floatData = new Float32Array(3 * channelSize);
+    const channelSize = imgW * imgH;
+    const floatData = new Float32Array(imgC * channelSize);
 
-    // 填充 114（BGR）
-    floatData.fill(114);
-
-    // 图像左上角，BGR 通道顺序 (CHW: B=0, G=1, R=2)
-    for (let y = 0; y < height; y++) {
-      const srcRowStart = y * width * 4;
-      const dstRowStart = y * TARGET_WIDTH;
-
-      for (let x = 0; x < width; x++) {
-        const srcIdx = srcRowStart + x * 4;
-        const dstIdx = dstRowStart + x;
-
-        // Jimp RGBA → ONNX BGR
-        floatData[dstIdx] = data[srcIdx + 2]; // B → CHW[0]
-        floatData[channelSize + dstIdx] = data[srcIdx + 1]; // G → CHW[1]
-        floatData[2 * channelSize + dstIdx] = data[srcIdx]; // R → CHW[2]
+    /**
+     * 图像左上角对齐到目标尺寸
+     * 
+     * YOLO 模型(BGR) 通道顺序 (CHW: B=0, G=1, R=2)
+     * Jimp RGBA → ONNX BGR: 源通道索引 = 2 - c
+     */
+    for (let c = 0; c < imgC; c++) {
+      const channelOffset = c * channelSize;
+      const srcChannel = imgC - 1 - c;
+      floatData.fill((114 - mean[c]) / std[c], channelOffset, channelOffset + channelSize);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const srcIdx = (y * width + x) * 4 + srcChannel;
+          const dstIdx = channelOffset + y * imgW + x;
+          floatData[dstIdx] = (data[srcIdx] - mean[c]) / std[c];
+        }
       }
     }
-
-    // 计算居中偏移
-    // const padLeft = (TARGET_WIDTH - width) >> 1;
-    // const padTop = (TARGET_HEIGHT - height) >> 1;
-
-    // 图像居中放置，BGR 通道顺序 (CHW: B=0, G=1, R=2)
-    // for (let y = 0; y < height; y++) {
-    //   const srcRowStart = y * width * 4;
-    //   const dstRowStart = (y + padTop) * TARGET_WIDTH + padLeft;
-
-    //   for (let x = 0; x < width; x++) {
-    //     const srcIdx = srcRowStart + x * 4;
-    //     const dstIdx = dstRowStart + x;
-
-    //     // Jimp RGBA → ONNX BGR
-    //     floatData[dstIdx] = data[srcIdx + 2]; // B → CHW[0]
-    //     floatData[channelSize + dstIdx] = data[srcIdx + 1]; // G → CHW[1]
-    //     floatData[2 * channelSize + dstIdx] = data[srcIdx]; // R → CHW[2]
-    //   }
-    // }
 
     return {
       floatData,
       ratio,
-      size: { height: TARGET_HEIGHT, width: TARGET_WIDTH },
+      size: { height: imgH, width: imgW },
       rawSize: { height: rawHeight, width: rawWidth },
     };
   }
@@ -460,9 +439,10 @@ export class DetectCaptchaService extends BaseOrtservice {
 
   private async detectBoxes(base64: string): Promise<DetectionBox[]> {
     const { floatData, ratio, size, rawSize } = await this.preproc(base64);
+    const { shape } = config.ocr;
 
     // ONNX 推理
-    const { output } = await this.run(new Tensor('float32', floatData, [1, 3, size.height, size.width]));
+    const { output } = await this.run(new Tensor('float32', floatData, [1, shape[0], size.height, size.width]));
     const outputData = output.data as Float32Array;
 
     // 后处理

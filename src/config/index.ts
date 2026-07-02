@@ -44,24 +44,24 @@ const envSchema = t.Object({
 
   // detect
   DETECT_MODEL_PATH: t.Optional(t.String({ default: 'models/detect.onnx' })),
-  // DETECT_SHAPE: t.Optional(t.Array(t.Numeric({ minimum: 0, multipleOf: 1 }), { default: [3, 416, 416] })),
-  // DETECT_MEAN: t.Optional(t.Array(t.Numeric({ multipleOf: 0.001 }), { default: [0, 0, 0] })),
-  // DETECT_STD: t.Optional(t.Array(t.Numeric({ multipleOf: 0.001 }), { default: [1, 1, 1] })),
+  DETECT_SHAPE: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 1 }, [3, 416, 416])),
+  DETECT_MEAN: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 0.001 }, [0, 0, 0])),
+  DETECT_STD: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 0.001 }, [1, 1, 1])),
 
   // ocr
   OCR_MODEL_PATH: t.Optional(t.String({ default: 'models/ocr_ppv5-cn.onnx' })),
   OCR_CHARSET_PATH: t.Optional(t.String({ default: 'models/ocr_ppv5-cn.json' })),
   OCR_CHARSET_RANGES: t.Optional(t.String({ default: '' })),
   OCR_SHAPE: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 1 }, [3, 48, 0])),
-  OCR_MEAN: t.Optional(t.Numeric({ default: 0.5 })),
-  OCR_STD: t.Optional(t.Numeric({ default: 0.5 })),
+  OCR_MEAN: t.Optional(t.Numeric({ minimum: 0, default: 0.5 })),
+  OCR_STD: t.Optional(t.Numeric({ minimum: 0, default: 0.5 })),
   OCR_CTC_LAYOUT: t.Optional(t.Enum({ tnc: 'tnc', ntc: 'ntc' }, { default: 'tnc' })),
 
   // rotate
   ROTATE_MODEL_PATH: t.Optional(t.String({ default: 'models/rotate.onnx' })),
-  // ROTATE_SHAPE: t.Optional(t.Array(t.Numeric({ minimum: 0, multipleOf: 1 }), { default: [3, 224, 224] })),
-  // ROTATE_MEAN: t.Optional(t.Array(t.Numeric({ multipleOf: 0.001 }), { default: [0.485, 0.456, 0.406] })),
-  // ROTATE_STD: t.Optional(t.Array(t.Numeric({ multipleOf: 0.001 }), { default: [0.229, 0.224, 0.225] })),
+  ROTATE_SHAPE: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 1 }, [3, 224, 224])),
+  ROTATE_MEAN: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 0.001 }, [0.485, 0.456, 0.406])),
+  ROTATE_STD: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 0.001 }, [0.229, 0.224, 0.225])),
 
   // openai
   OPENAI_BASE_URL: t.Optional(t.String({ default: '' })),
@@ -118,15 +118,15 @@ export const config = {
   },
   rotate: {
     modelPath: env.ROTATE_MODEL_PATH,
-    // shape: env.ROTATE_SHAPE,
-    // mean: env.ROTATE_MEAN,
-    // std: env.ROTATE_STD,
+    shape: env.ROTATE_SHAPE,
+    mean: env.ROTATE_MEAN,
+    std: env.ROTATE_STD,
   },
   detect: {
     modelPath: env.DETECT_MODEL_PATH,
-    // shape: env.DETECT_SHAPE,
-    // mean: env.DETECT_MEAN,
-    // std: env.DETECT_STD,
+    shape: env.DETECT_SHAPE,
+    mean: env.DETECT_MEAN,
+    std: env.DETECT_STD,
   },
   openai: {
     baseURL: env.OPENAI_BASE_URL,

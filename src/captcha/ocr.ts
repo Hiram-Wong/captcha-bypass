@@ -184,7 +184,6 @@ class OcrOrtCaptchaService extends BaseOrtservice {
     if (imgC === 1) image.greyscale();
 
     const { data, width, height } = image.bitmap;
-
     const channelSize = maxWidth * imgH;
     const floatData = new Float32Array(imgC * channelSize);
 

@@ -42,10 +42,8 @@ class RotateOrtCaptchaService extends BaseOrtservice {
     size: { height: number; width: number };
     rawSize: { height: number; width: number };
   }> => {
-    const MEAN = [0.485, 0.456, 0.406];
-    const STD = [0.229, 0.224, 0.225];
-    const TARGET_SIZE = [224, 224];
-    const [TARGET_WIDTH, TARGET_HEIGHT] = TARGET_SIZE;
+    const { shape, mean, std } = config.rotate;
+    const [imgC, imgH, imgW] = shape;
 
     const image = await Jimp.read(Buffer.from(base64.replace(/^data:image\/\w+;base64,/, ''), 'base64'));
     const { width: rawWidth, height: rawHeight } = image.bitmap;
@@ -56,30 +54,36 @@ class RotateOrtCaptchaService extends BaseOrtservice {
     const cropY = Math.floor((rawHeight - outputSize) / 2);
     image.crop({ x: cropX, y: cropY, w: outputSize, h: outputSize });
 
-    image.resize({ w: TARGET_WIDTH, h: TARGET_HEIGHT }); // 缩放
+    image.resize({ w: imgW, h: imgH });
 
     const { data, width, height } = image.bitmap;
-    const channelSize = width * height;
-    const floatData = new Float32Array(3 * channelSize);
+    const channelSize = imgW * imgH;
+    const floatData = new Float32Array(imgC * channelSize);
 
-    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      floatData[j] = (data[i] / 255.0 - MEAN[0]) / STD[0];
-      floatData[channelSize + j] = (data[i + 1] / 255.0 - MEAN[1]) / STD[1];
-      floatData[2 * channelSize + j] = (data[i + 2] / 255.0 - MEAN[2]) / STD[2];
+    for (let c = 0; c < imgC; c++) {
+      const channelOffset = c * channelSize;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const srcIdx = (y * width + x) * 4 + c;
+          const dstIdx = channelOffset + y * width + x;
+          floatData[dstIdx] = (data[srcIdx] / 255.0 - mean[c]) / std[c];
+        }
+      }
     }
 
     return {
       floatData,
-      size: { height, width },
+      size: { height: imgH, width: imgW },
       rawSize: { height: rawHeight, width: rawWidth },
     };
   };
 
   public async singleRotate(bgBase64: string): Promise<RotateResult> {
     const { floatData, size } = await this.preproc(bgBase64);
+    const { shape } = config.ocr;
 
     // ONNX 推理
-    const { output } = await this.run(new Tensor('float32', floatData, [1, 3, size.height, size.width]));
+    const { output } = await this.run(new Tensor('float32', floatData, [1, shape[0], size.height, size.width]));
     const outputData = output.data as Float32Array;
     const clsNum = output.dims[output.dims.length - 1];
 
