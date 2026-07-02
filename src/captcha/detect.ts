@@ -66,7 +66,7 @@ export class DetectCaptchaService extends BaseOrtservice {
 
     /**
      * 图像左上角对齐到目标尺寸
-     * 
+     *
      * YOLO 模型(BGR) 通道顺序 (CHW: B=0, G=1, R=2)
      * Jimp RGBA → ONNX BGR: 源通道索引 = 2 - c
      */
@@ -307,67 +307,6 @@ export class DetectCaptchaService extends BaseOrtservice {
     ]);
   }
 
-  private hungarian(costMatrix: number[][]): number[] {
-    const n = costMatrix.length;
-    const m = costMatrix[0]?.length ?? 0;
-    if (n === 0 || m === 0) return [];
-
-    const u = new Array<number>(n + 1).fill(0);
-    const v = new Array<number>(m + 1).fill(0);
-    const p = new Array<number>(m + 1).fill(0);
-    const way = new Array<number>(m + 1).fill(0);
-
-    for (let i = 1; i <= n; i++) {
-      p[0] = i;
-      let j0 = 0;
-      const minv = new Array<number>(m + 1).fill(Infinity);
-      const used = new Array<boolean>(m + 1).fill(false);
-
-      do {
-        used[j0] = true;
-        const i0 = p[j0];
-        let delta = Infinity;
-        let j1 = 0;
-
-        for (let j = 1; j <= m; j++) {
-          if (!used[j]) {
-            const cur = costMatrix[i0 - 1][j - 1] - u[i0] - v[j];
-            if (cur < minv[j]) {
-              minv[j] = cur;
-              way[j] = j0;
-            }
-            if (minv[j] < delta) {
-              delta = minv[j];
-              j1 = j;
-            }
-          }
-        }
-
-        for (let j = 0; j <= m; j++) {
-          if (used[j]) {
-            u[p[j]] += delta;
-            v[j] -= delta;
-          } else {
-            minv[j] -= delta;
-          }
-        }
-        j0 = j1;
-      } while (p[j0] !== 0);
-
-      do {
-        const j1 = way[j0];
-        p[j0] = p[j1];
-        j0 = j1;
-      } while (j0 !== 0);
-    }
-
-    const assignment = new Array<number>(m).fill(-1);
-    for (let j = 1; j <= m; j++) {
-      if (p[j] !== 0) assignment[j - 1] = p[j] - 1;
-    }
-    return assignment;
-  }
-
   private boxArea(b: DetectionBox): number {
     return (b.x2 - b.x1) * (b.y2 - b.y1);
   }
@@ -398,39 +337,34 @@ export class DetectCaptchaService extends BaseOrtservice {
     const B = bgBoxes.length;
     if (T === 0 || B === 0) return [];
 
-    const n = Math.max(T, B);
     const cost: number[][] = [];
 
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < T; i++) {
       const row: number[] = [];
-      for (let j = 0; j < n; j++) {
-        if (i < T && j < B) {
-          const ta = this.boxArea(thumbBoxes[i]);
-          const ba = this.boxArea(bgBoxes[j]);
-          const areaCost = ta > 0 && ba > 0 ? Math.abs(ta - ba) / Math.max(ta, ba) : 1;
+      for (let j = 0; j < B; j++) {
+        const ta = this.boxArea(thumbBoxes[i]);
+        const ba = this.boxArea(bgBoxes[j]);
+        const areaCost = ta > 0 && ba > 0 ? Math.abs(ta - ba) / Math.max(ta, ba) : 1;
 
-          const tw = thumbBoxes[i].x2 - thumbBoxes[i].x1;
-          const th = thumbBoxes[i].y2 - thumbBoxes[i].y1;
-          const bw = bgBoxes[j].x2 - bgBoxes[j].x1;
-          const bh = bgBoxes[j].y2 - bgBoxes[j].y1;
-          const tr = tw > 0 ? th / tw : 0;
-          const br = bw > 0 ? bh / bw : 0;
-          const aspectCost = tr > 0 && br > 0 ? Math.abs(tr - br) / Math.max(tr, br) : 1;
+        const tw = thumbBoxes[i].x2 - thumbBoxes[i].x1;
+        const th = thumbBoxes[i].y2 - thumbBoxes[i].y1;
+        const bw = bgBoxes[j].x2 - bgBoxes[j].x1;
+        const bh = bgBoxes[j].y2 - bgBoxes[j].y1;
+        const tr = tw > 0 ? th / tw : 0;
+        const br = bw > 0 ? bh / bw : 0;
+        const aspectCost = tr > 0 && br > 0 ? Math.abs(tr - br) / Math.max(tr, br) : 1;
 
-          row.push(areaCost + aspectCost);
-        } else {
-          row.push(Infinity);
-        }
+        row.push(areaCost + aspectCost);
       }
       cost.push(row);
     }
 
-    const assignment = this.hungarian(cost);
+    const { assignment } = this.hungarian(cost);
 
     const result: DetectionBox[] = [];
-    for (let j = 0; j < B; j++) {
-      const i = assignment[j];
-      if (i >= 0 && i < T) {
+    for (let i = 0; i < T; i++) {
+      const j = assignment[i];
+      if (j >= 0 && j < B) {
         result.push(bgBoxes[j]);
       }
     }
@@ -439,7 +373,7 @@ export class DetectCaptchaService extends BaseOrtservice {
 
   private async detectBoxes(base64: string): Promise<DetectionBox[]> {
     const { floatData, ratio, size, rawSize } = await this.preproc(base64);
-    const { shape } = config.ocr;
+    const { shape } = config.detect;
 
     // ONNX 推理
     const { output } = await this.run(new Tensor('float32', floatData, [1, shape[0], size.height, size.width]));

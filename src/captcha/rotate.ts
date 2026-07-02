@@ -80,7 +80,7 @@ class RotateOrtCaptchaService extends BaseOrtservice {
 
   public async singleRotate(bgBase64: string): Promise<RotateResult> {
     const { floatData, size } = await this.preproc(bgBase64);
-    const { shape } = config.ocr;
+    const { shape } = config.rotate;
 
     // ONNX 推理
     const { output } = await this.run(new Tensor('float32', floatData, [1, shape[0], size.height, size.width]));
