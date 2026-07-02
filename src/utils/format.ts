@@ -1,4 +1,5 @@
 import { file } from 'bun';
+import { fileTypeFromBuffer } from 'file-type';
 
 import type { ImageInput } from '@/types/shared';
 import { isBufferedFile, isHttp, isImageMime, isWebFile } from './validate';
@@ -7,51 +8,58 @@ export const toImageBase64 = async (data: ImageInput): Promise<string> => {
   // Buffered upload file
   if (isBufferedFile(data)) {
     if (!isImageMime(data.mimetype)) throw new Error('上传文件不是图片');
-
     return `data:${data.mimetype};base64,${data.buffer.toString('base64')}`;
   }
 
   // FormData File
   if (isWebFile(data)) {
     if (!isImageMime(data.type)) throw new Error('上传文件不是图片');
-
     const buffer = await data.arrayBuffer();
     return `data:${data.type};base64,${Buffer.from(buffer).toString('base64')}`;
   }
 
   // URL
-  if (isHttp(data)) {
-    const res = await fetch(data, {
-      signal: AbortSignal.timeout(30_000),
-    });
-
-    if (!res.ok) {
-      throw new Error('无法访问图片链接');
-    }
-
-    const contentType = res.headers.get('content-type') || '';
-    if (!isImageMime(contentType)) {
-      throw new Error('链接资源不是图片');
-    }
-
-    const buffer = await res.arrayBuffer();
-    return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
-  }
-
-  // Local
-  const localFile = file(data as string);
-  if (await localFile.exists()) {
-    const buffer = await localFile.arrayBuffer();
-    const mime = localFile.type;
-    return `data:${mime};base64,${Buffer.from(buffer).toString('base64')}`;
-  }
-
-  // Base64
   if (typeof data === 'string') {
-    if (!data.includes('base64,')) {
-      return `data:image/png;base64,${data}`;
+    if (/^data:(.+?);base64,/.test(data)) return data;
+
+    if (isHttp(data)) {
+      const res = await fetch(data, {
+        signal: AbortSignal.timeout(30_000),
+      });
+
+      if (!res.ok) {
+        throw new Error('无法访问图片链接');
+      }
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!isImageMime(contentType)) {
+        throw new Error('链接资源不是图片');
+      }
+
+      const buffer = await res.arrayBuffer();
+      return `data:${contentType};base64,${Buffer.from(buffer).toString('base64')}`;
     }
-    return data;
+
+    // Local
+    try {
+      const localFile = file(data as string);
+      if (await localFile.exists()) {
+        const buffer = await localFile.arrayBuffer();
+        const mime = localFile.type;
+        if (mime && isImageMime(mime)) {
+          return `data:${mime};base64,${Buffer.from(buffer).toString('base64')}`;
+        }
+      }
+    } catch {}
+
+    try {
+      const buffer = Buffer.from(data, 'base64');
+      const type = await fileTypeFromBuffer(buffer);
+      const mime = type?.mime;
+      if (mime && isImageMime(mime)) {
+        return `data:${mime};base64,${data}`;
+      }
+    } catch {}
   }
 
   throw new Error('不支持的图片数据类型');
