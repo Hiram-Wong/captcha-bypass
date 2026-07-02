@@ -4,12 +4,15 @@ import { resolve } from 'node:path';
 import { CryptoHasher, file, JSON5, write } from 'bun';
 import { InferenceSession, Tensor, env as ortEnv } from 'onnxruntime-web';
 
+import { log } from '@/utils/logger';
 import { ROOT_PATH } from '@/utils/path';
 import { isPackaged } from '@/utils/systemInfo';
 import { isJsonStr } from '@/utils/validate';
 
 import wasmBin from '../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm' with { type: 'file' };
 import mjsBin from '../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs' with { type: 'file' };
+
+const logger = log.withContext('MODULE<ort>');
 
 type OrtRunResult = {
   output: Tensor;
@@ -128,7 +131,7 @@ export class BaseOrtservice {
       if (!Array.isArray(raw)) throw new Error('Invalid charset format');
       charset = raw;
     } else {
-      charset = (input as string).split('');
+      charset = (input as string).includes('\n') ? (input as string).split('\n') : [...(input as string)];
     }
 
     if (!charset.length) throw new Error('Charset is empty');
@@ -165,58 +168,80 @@ export class BaseOrtservice {
       blankIndex?: number;
       mergeRepeated?: boolean;
       allowedIndices?: Set<number>;
+      layout?: 'tnc' | 'ntc';
     },
   ): string | string[] {
     const { dims, data } = outputTensor;
 
-    // [time_steps=21, batch=1, num_classes=8210]
+    const { sequenceLength = [], blankIndex = 0, mergeRepeated = true, allowedIndices, layout = 'tnc' } = options || {};
+
     const isBatch = dims.length === 3;
-    const batchSize = isBatch ? dims[1] : 1;
-    const maxTime = isBatch ? dims[0] : dims[0];
-    const numClasses = isBatch ? dims[2] : dims[1];
 
-    const { sequenceLength = [], blankIndex, mergeRepeated = true, allowedIndices } = options || {};
+    let batchSize: number;
+    let maxTime: number;
+    let numClasses: number;
 
-    const blankIdx = blankIndex ?? numClasses - 1;
+    if (!isBatch) {
+      [maxTime, numClasses] = dims; // [T,C]
+      batchSize = 1;
+    } else if (layout === 'tnc') {
+      [maxTime, batchSize, numClasses] = dims; // [T,N,C]
+    } else {
+      [batchSize, maxTime, numClasses] = dims; // [N,T,C]
+    }
+
+    if (blankIndex < 0 || blankIndex >= numClasses) {
+      throw new Error(`invalid blankIndex: ${blankIndex}`);
+    }
+
     const results: string[] = [];
-
-    // 计算每帧的步长（classes 维度）
-    const frameStride = numClasses;
-    const batchStride = isBatch ? maxTime * numClasses : 0;
+    const values = data as Float32Array;
+    const vocabSize = vocabulary.length;
 
     for (let b = 0; b < batchSize; b++) {
-      const seqLen = sequenceLength[b] ?? maxTime;
-      const decodedChars: string[] = [];
-      let prevId = blankIdx;
+      const seqLen = Math.min(sequenceLength[b] ?? maxTime, maxTime);
 
-      // 计算该 batch 的起始偏移
-      const batchOffset = isBatch ? b * batchStride : 0;
+      const decodedChars: string[] = [];
+
+      let prevId = blankIndex;
+      let vocabOverflow = false;
 
       for (let t = 0; t < seqLen; t++) {
-        // 当前帧在 Float32Array 中的起始位置
-        const frameOffset = batchOffset + t * frameStride;
+        let frameOffset: number;
 
-        // 在 [frameOffset, frameOffset + numClasses) 范围内找最大值索引
+        if (!isBatch) {
+          frameOffset = t * numClasses; // [T,C]
+        } else if (layout === 'tnc') {
+          frameOffset = t * batchSize * numClasses + b * numClasses; // [T,N,C]
+        } else {
+          frameOffset = b * maxTime * numClasses + t * numClasses; // [N,T,C]
+        }
+
         let maxId = 0;
         let maxVal = -Infinity;
 
-        if (allowedIndices && allowedIndices.size > 0) {
+        if (!!allowedIndices?.size) {
           for (const c of allowedIndices) {
-            const val = (data as Float32Array)[frameOffset + c];
+            const val = values[frameOffset + c];
+
             if (val > maxVal) {
               maxVal = val;
               maxId = c;
             }
           }
 
-          const blankVal = (data as Float32Array)[frameOffset + blankIdx];
-          if (blankVal > maxVal) {
-            maxVal = blankVal;
-            maxId = blankIdx;
+          if (!allowedIndices.has(blankIndex)) {
+            const blankVal = values[frameOffset + blankIndex];
+
+            if (blankVal > maxVal) {
+              maxVal = blankVal;
+              maxId = blankIndex;
+            }
           }
         } else {
           for (let c = 0; c < numClasses; c++) {
-            const val = (data as Float32Array)[frameOffset + c];
+            const val = values[frameOffset + c];
+
             if (val > maxVal) {
               maxVal = val;
               maxId = c;
@@ -224,24 +249,16 @@ export class BaseOrtservice {
           }
         }
 
-        // 跳过空白符
-        if (maxId === blankIdx) {
-          prevId = maxId;
-          continue;
-        }
-
-        // 跳过重复（CTC 核心规则）
-        if (mergeRepeated && maxId === prevId) {
-          continue;
+        if (maxId !== blankIndex && (!mergeRepeated || maxId !== prevId)) {
+          if (maxId < vocabSize) {
+            decodedChars.push(vocabulary[maxId]);
+          } else if (!vocabOverflow) {
+            vocabOverflow = true;
+            logger.debug(`ctc greedy decode: index ${maxId} out of vocab range (size ${vocabulary.length})`);
+          }
         }
 
         prevId = maxId;
-
-        // 映射到字符
-        const char = vocabulary[maxId];
-        if (char !== undefined) {
-          decodedChars.push(char);
-        }
       }
 
       results.push(decodedChars.join(''));

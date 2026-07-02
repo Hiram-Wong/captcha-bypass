@@ -164,45 +164,53 @@ class OcrOrtCaptchaService extends BaseOrtservice {
     size: { height: number; width: number };
     rawSize: { height: number; width: number };
   }> {
-    const MEAN = 0.5; // [0.485, 0.456, 0.406];
-    const STD = 0.5; // [0.229, 0.224, 0.225];
-    const TARGET_SIZE = [0, 64];
-    const [_TARGET_WIDTH, TARGET_HEIGHT] = TARGET_SIZE;
+    const { mean, std, shape } = config.ocr;
+    const [imgC, imgH, imgW] = shape;
 
     const image = await Jimp.read(Buffer.from(base64.replace(/^data:image\/\w+;base64,/, ''), 'base64'));
     const { width: rawWidth, height: rawHeight } = image.bitmap;
 
-    const newWidth = Math.max(1, Math.floor(rawWidth * (TARGET_HEIGHT / rawHeight)));
-    const newHeight = TARGET_HEIGHT;
+    const ratio = rawWidth / rawHeight;
+    const maxWidth = imgW > 0 ? imgW : Math.ceil(imgH * ratio); // 0 表示不限制宽度
 
-    image.resize({ w: newWidth, h: newHeight }); // 缩放
-    image.greyscale(); // sRGB gamma-corrected 优于 luminance
+    let resizedW: number;
+    if (imgW > 0 && Math.ceil(imgH * ratio) > imgW) {
+      resizedW = imgW;
+    } else {
+      resizedW = Math.max(1, Math.ceil(imgH * ratio));
+    }
+
+    image.resize({ w: resizedW, h: imgH });
+    if (imgC === 1) image.greyscale();
 
     const { data, width, height } = image.bitmap;
-    const channelSize = width * height;
-    const floatData = new Float32Array(channelSize);
 
-    for (let i = 0, j = 0; i < data.length; i += 4, j++) {
-      floatData[j] = (data[i] / 255.0 - MEAN) / STD; // ddddocr 1.6.1
+    const channelSize = maxWidth * imgH;
+    const floatData = new Float32Array(imgC * channelSize);
 
-      // 1.5.5
-      // floatData[j] = (data[i] / 255.0 - MEAN[0]) / STD[0];
-      // floatData[channelSize + j] = (data[i + 1] / 255.0 - MEAN[1]) / STD[1];
-      // floatData[2 * channelSize + j] = (data[i + 2] / 255.0 - MEAN[2]) / STD[2];
+    for (let c = 0; c < imgC; c++) {
+      const channelOffset = c * channelSize;
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const srcIdx = (y * width + x) * 4 + c;
+          const dstIdx = channelOffset + y * maxWidth + x;
+          floatData[dstIdx] = (data[srcIdx] / 255.0 - mean) / std;
+        }
+      }
     }
 
     return {
       floatData,
-      size: { height, width },
+      size: { height: imgH, width: maxWidth },
       rawSize: { height: rawHeight, width: rawWidth },
     };
   }
 
   public async text(bgBase64: string, ranges?: Set<string>): Promise<TextResult> {
     const { floatData, size } = await this.preproc(bgBase64);
+    const { shape, ctc } = config.ocr;
 
-    // ONNX 推理
-    const { output } = await this.run(new Tensor('float32', floatData, [1, 1, size.height, size.width]));
+    const { output } = await this.run(new Tensor('float32', floatData, [1, shape[0], size.height, size.width]));
 
     const vocab = this.charset;
 
@@ -223,7 +231,11 @@ class OcrOrtCaptchaService extends BaseOrtservice {
       : undefined;
 
     // CTC 解码（限制在 allowedIndices 范围内 argmax）
-    const ctcDecode = this.ctcGreedyDecode(output, vocab, { blankIndex: 0, allowedIndices });
+    const ctcDecode = this.ctcGreedyDecode(output, vocab, {
+      blankIndex: 0,
+      allowedIndices,
+      layout: ctc.layout,
+    });
     const text = typeof ctcDecode === 'string' ? ctcDecode : ctcDecode[0];
     logger.debug(`raw ctc decode: ${text}`);
 
