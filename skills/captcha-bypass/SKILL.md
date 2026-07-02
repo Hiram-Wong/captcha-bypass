@@ -16,7 +16,7 @@ All inference runs locally using ONNX deep learning models and OpenCV.js image p
 - **CLI mode** — Direct command-line invocation, outputs JSON to stdout. Best for scripting and one-shot recognition.
 - **Server mode** — HTTP API on `http://127.0.0.1:7788` with REST endpoints and an MCP endpoint for AI agent integration.
 
-> The code default is `cli`, but if `.env` sets `RUN_MODE=server`, that takes priority. Check `.env` to verify the actual mode.
+> The code default is `cli`. The bundled `.env.example` sets `RUN_MODE=server`, and any copied `.env` value takes priority over the code default. Check `.env` to verify the actual mode.
 
 ## Quick Start
 
@@ -82,7 +82,7 @@ Recognize text-based or arithmetic CAPTCHA images.
 { "status": 0, "data": { "formula": "41*8", "result": 328 }, "msg": "success" }
 
 // error:
-{ "code": -1, "msg": "识别失败" }
+{ "code": -1, "msg": "Recognition failed" }
 ```
 
 **Example calls:**

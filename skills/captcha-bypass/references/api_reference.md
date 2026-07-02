@@ -2,6 +2,8 @@
 
 ## Service Configuration
 
+The table below reflects the code defaults in `src/config/index.ts`. A copied `.env` file can override them; the bundled `.env.example` currently sets `RUN_MODE=server`, `NODE_ENV=production`, and `LOG_LEVEL=warn`.
+
 | Env Variable         | Type    | Default     | Description                                                     |
 | -------------------- | ------- | ----------- | --------------------------------------------------------------- |
 | `RUN_MODE`           | string  | cli         | Running mode<br>`cli` (command line) or `server` (HTTP API)      |
@@ -11,12 +13,22 @@
 | `OPENAPI_ENABLE`     | boolean | false       | Enable Swagger UI at `/docs`                                    |
 | `AUTH_TYPE`          | 0\|1\|2 | 0           | Auth type<br>0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
 | `AUTH_KEY`           | string  | ""          | Auth key<br>Used when AUTH_TYPE=1 or 2                          |
-| `DETECT_MODEL_PATH`  | string  | ""          | Detect model path<br>Defaults to `models/detect.onnx` if empty  |
-| `OCR_MODEL_PATH`     | string  | ""          | OCR model path<br>Defaults to `models/ocr.onnx` if empty        |
-| `OCR_CHARSET_PATH`   | string  | ""          | OCR charset file path<br>Defaults to `models/ocr.json` if empty |
-| `OCR_CHARSET_RANGES` | string  | ""          | Global charset filter<br>e.g. `"0123456789"`                     |
-| `ROTATE_MODEL_PATH`  | string  | ""          | Rotate model path<br>Defaults to `models/rotate.onnx` if empty  |
-| `OPENAI_BASE_URL`    | string  | ""          | OpenAI API base URL<br>Only `/chat/completions` supported |
+| `DETECT_MODEL_PATH`  | string  | `models/detect.onnx` | Detect model path                                      |
+| `DETECT_SHAPE`       | number[]  | `[3,416,416]` | Model input shape [C,H,W]                                       |
+| `DETECT_MEAN`        | number[]  | `[0,0,0]`   | Mean normalization                                               |
+| `DETECT_STD`         | number[]  | `[1,1,1]`   | Std normalization                                                |
+| `OCR_MODEL_PATH`     | string  | `models/ocr_ppv5-cn.onnx` | OCR model path                                                  |
+| `OCR_CHARSET_PATH`   | string  | `models/ocr_ppv5-cn.json` | OCR charset file path                                           |
+| `OCR_CHARSET_RANGES` | string  | ""                        | Charset filter<br>e.g. `"0123456789"`                           |
+| `OCR_SHAPE`          | number[]  | `[3,48,320]`            | Model input shape [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]` |
+| `OCR_MEAN`           | number  | `0.5`                     | Mean normalization                                               |
+| `OCR_STD`            | number  | `0.5`                     | Std normalization                                                |
+| `OCR_CTC_LAYOUT`     | "ntc"\|"tnc" | `ntc`               | CTC layout<br>ppocr: ntc / ddddocr: tnc                         |
+| `ROTATE_MODEL_PATH`  | string  | `models/rotate.onnx`      | Rotate model path                                                |
+| `ROTATE_SHAPE`       | number[]  | `[3,224,224]`           | Model input shape [C,H,W]                                       |
+| `ROTATE_MEAN`        | number[]  | `[0.485,0.456,0.406]`  | Mean normalization                                               |
+| `ROTATE_STD`         | number[]  | `[0.229,0.224,0.225]`  | Std normalization                                                |
+| `OPENAI_BASE_URL`    | string  | ""                        | OpenAI API base URL<br>Only `/chat/completions` supported        |
 | `OPENAI_API_KEY`     | string  | ""          | OpenAI API key                                                  |
 | `OPENAI_OCR_MODEL`   | string  | PaddleOCR-VL-1.6 | OCR-specific model name<br>Recommended: PaddleOCR, DeepSeek-OCR, HunyuanOCR |
 | `OPENAI_MODEL`       | string  | gpt-5.5     | General model name                                                |
@@ -86,19 +98,19 @@ Math type:
 **Error response:**
 
 ```json
-{ "code": -1, "msg": "识别失败" }
+{ "code": -1, "msg": "Recognition failed" }
 ```
 
 **Validation error (400):**
 
 ```json
-{ "code": -1, "msg": "请求参数校验失败" }
+{ "code": -1, "msg": "Request validation failed" }
 ```
 
 **Auth error (401):**
 
 ```json
-{ "status": -1, "msg": "认证失败" }
+{ "status": -1, "msg": "Authentication failed" }
 ```
 
 **curl examples:**
@@ -163,7 +175,7 @@ Determine the rotation angle to align a rotated CAPTCHA image.
 **Error response:**
 
 ```json
-{ "code": -1, "msg": "识别失败" }
+{ "code": -1, "msg": "Recognition failed" }
 ```
 
 **curl examples:**
@@ -229,7 +241,7 @@ Find the slider piece position in a background image.
 **Error response:**
 
 ```json
-{ "code": -1, "msg": "识别失败" }
+{ "code": -1, "msg": "Recognition failed" }
 ```
 
 **curl examples:**
@@ -291,7 +303,7 @@ Detect objects using YOLO-style object detection, or match thumb objects to a ba
 **Error response:**
 
 ```json
-{ "code": -1, "msg": "识别失败" }
+{ "code": -1, "msg": "Recognition failed" }
 ```
 
 **curl examples:**

@@ -52,10 +52,10 @@ const envSchema = t.Object({
   OCR_MODEL_PATH: t.Optional(t.String({ default: 'models/ocr_ppv5-cn.onnx' })),
   OCR_CHARSET_PATH: t.Optional(t.String({ default: 'models/ocr_ppv5-cn.json' })),
   OCR_CHARSET_RANGES: t.Optional(t.String({ default: '' })),
-  OCR_SHAPE: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 1 }, [3, 48, 0])),
+  OCR_SHAPE: t.Optional(numericArraySchema({ minimum: 0, multipleOf: 1 }, [3, 48, 320])),
   OCR_MEAN: t.Optional(t.Numeric({ minimum: 0, default: 0.5 })),
   OCR_STD: t.Optional(t.Numeric({ minimum: 0, default: 0.5 })),
-  OCR_CTC_LAYOUT: t.Optional(t.Enum({ tnc: 'tnc', ntc: 'ntc' }, { default: 'tnc' })),
+  OCR_CTC_LAYOUT: t.Optional(t.Enum({ tnc: 'tnc', ntc: 'ntc' }, { default: 'ntc' })),
 
   // rotate
   ROTATE_MODEL_PATH: t.Optional(t.String({ default: 'models/rotate.onnx' })),
