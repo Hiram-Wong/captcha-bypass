@@ -9,7 +9,6 @@ services:
       - '7788:7788'
     environment:
       - TZ=Asia/Shanghai
-      - RUN_MODE=server
     volumes:
       - ./data/.env:/app/.env
       - ./data/logs:/app/logs

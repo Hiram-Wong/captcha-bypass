@@ -2,13 +2,12 @@
 
 ## Service Configuration
 
-The table below reflects the code defaults in `src/config/index.ts`. A copied `.env` file can override them; the bundled `.env.example` currently sets `RUN_MODE=server`, `NODE_ENV=production`, and `LOG_LEVEL=warn`.
+The table below reflects the code defaults in `src/config/index.ts`. A copied `.env` file can override them; the bundled `.env.example` currently sets `NODE_ENV=production`, and `LOG_LEVEL=warn`.
 
 | Env Variable         | Type    | Default     | Description                                                     |
 | -------------------- | ------- | ----------- | --------------------------------------------------------------- |
-| `RUN_MODE`           | string  | cli         | Running mode<br>`cli` (command line) or `server` (HTTP API)      |
 | `NODE_ENV`           | string  | development | `development`, or `production`                                  |
-| `LOG_LEVEL`          | string  | info        | Log level<br>`silly` < `debug` < `info` < `warn` < `error`      |
+| `LOG_LEVEL`          | string  | none        | Log level<br>`silly` < `debug` < `info` < `warn` < `error` < `none` |
 | `PORT`               | number  | 7788        | Service port (server mode only)                                  |
 | `OPENAPI_ENABLE`     | boolean | false       | Enable Swagger UI at `/docs`                                    |
 | `AUTH_TYPE`          | 0\|1\|2 | 0           | Auth type<br>0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
@@ -418,35 +417,33 @@ Supported formats: PNG, JPEG, WebP, BMP, TIFF.
 
 ### CLI Mode
 
-> The code default is `cli`, but if `.env` sets `RUN_MODE=server`, that takes priority. Override it on the command line or remove from `.env`.
-
 ```bash
-# Override .env
 # macOS / Linux:
-RUN_MODE=cli ./captcha-bypass ocr --type text --bg ./captcha.png
+./captcha-bypass-cli ocr --type text --bg ./captcha.png
 # Windows:
-set RUN_MODE=cli && .\captcha-bypass.exe ocr --type text --bg ./captcha.png
+.\captcha-bypass-cli.exe ocr --type text --bg ./captcha.png
 
 # Or via bun
-RUN_MODE=cli bun cli -- ocr --type text --bg ./captcha.png
+bun cli -- ocr --type text --bg ./captcha.png
 ```
-> **Platform**: On **Windows**, replace `./captcha-bypass` with `.\captcha-bypass.exe`, and use `set VAR=val && ...` instead of `VAR=val ...`.
+> **Platform**: On **Windows**, replace `./captcha-bypass-cli` with `.\captcha-bypass-cli.exe`.
 
 ### Server Mode
 
-Set `RUN_MODE=server` in `.env`, then:
-
 ```bash
+# Run the server binary
+./captcha-bypass-server
+
 # Development (with hot reload)
 bun run dev
 
 # Direct
 bun src/index.ts
 
-# Build standalone binary
+# Build standalone binaries
 bun run build
 # Platform-specific: build:mac:arm64, build:linux:x64, etc.
 
 # Run built binary
-./dist/captcha-bypass-bin-macos-arm64
+./dist/captcha-bypass-server-macos-arm64
 ```

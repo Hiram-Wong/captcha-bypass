@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, exists } from 'node:fs/promises';
+import { cp, mkdir, rm } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -20,25 +20,38 @@ const PLATFORM = {
 
 const ARCH = ['x64', 'arm64'];
 
+const BINARY = {
+  server: { entry: 'src/server.ts' },
+  cli: { entry: 'src/cli.ts' },
+};
+
 const parseArgs = () => {
   const args = argv.slice(2);
-  let platform = Object.keys(PLATFORM);
-  let arch = ARCH;
+  let platforms = Object.keys(PLATFORM);
+  let archs = ARCH;
+  let types = Object.keys(BINARY);
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--platform') {
       const v = args[++i];
       if (!PLATFORM[v]) throw new Error(`Unknown platform: ${v}`);
-      platform = [v];
+      platforms = [v];
     }
     if (args[i] === '--arch') {
       const v = args[++i];
       if (!ARCH.includes(v)) throw new Error(`Unknown arch: ${v}`);
-      arch = [v];
+      archs = [v];
+    }
+    if (args[i] === '--type') {
+      const v = args[++i];
+      if (!BINARY[v]) throw new Error(`Unknown type: ${v}, should be "cli" or "server"`);
+      types = [v];
     }
   }
 
-  return platform.flatMap((p) => arch.map((a) => ({ platform: p, arch: a })));
+  return platforms.flatMap((p) =>
+    archs.flatMap((a) => types.map((t) => ({ platform: p, arch: a, type: t, entry: BINARY[t].entry }))),
+  );
 };
 
 const ensureDir = async (dir) => {
@@ -64,16 +77,29 @@ const copyDir = async (src, dest) => {
   await cp(src, dest, { recursive: true });
 };
 
-const buildOne = async (platform, arch) => {
+const signDarwin = async (path) => {
+  try {
+    const removeSign = spawn(['codesign', '--remove-signature', path]);
+    await removeSign.exited;
+  } catch {}
+
+  const sign = spawn(['codesign', '--deep', '--force', '--sign', '-', path]);
+  await sign.exited;
+  if (sign.exitCode !== 0) {
+    console.warn(`Warning: codesign exited with code ${sign.exitCode}`);
+  }
+};
+
+const buildBinary = async (platform, arch, entry, type) => {
   const cfg = PLATFORM[platform];
   const target = `bun-${cfg.bun}-${arch}`;
-  const output = `${pkg.name}-${cfg.name}-${arch}${cfg.ext ?? ''}`;
+  const output = `${pkg.name}-${type}-${cfg.name}-${arch}${cfg.ext ?? ''}`;
   const outputPath = resolve(DIST_DIR, output);
 
   console.log(`Building: ${target}  →  ${output}`);
 
   const result = await build({
-    entrypoints: [resolve(ROOT_DIR, 'src/index.ts')],
+    entrypoints: [resolve(ROOT_DIR, entry)],
     target: 'bun',
     minify: true,
     bytecode: true,
@@ -85,7 +111,7 @@ const buildOne = async (platform, arch) => {
         ? {
             windows: {
               icon: resolve(ROOT_DIR, 'public/favicon.ico'),
-              title: pkg.name,
+              title: `${pkg.name}-${type}`,
               publisher: `com.github.${pkg.author.name}`,
               version: pkg.version,
               description: pkg.description,
@@ -101,16 +127,7 @@ const buildOne = async (platform, arch) => {
   }
 
   if (platform === 'darwin') {
-    try {
-      const removeSign = spawn(['codesign', '--remove-signature', outputPath]);
-      await removeSign.exited;
-    } catch {}
-
-    const sign = spawn(['codesign', '--deep', '--force', '--sign', '-', outputPath]);
-    await sign.exited;
-    if (sign.exitCode !== 0) {
-      console.warn(`Warning: codesign exited with code ${sign.exitCode}`);
-    }
+    await signDarwin(outputPath);
   }
 
   console.log(`Done: ${output}\n`);
@@ -122,12 +139,12 @@ const main = async () => {
   await copyDir(resolve(ROOT_DIR, 'models'), resolve(DIST_DIR, 'models'));
   await copyDir(resolve(ROOT_DIR, 'public'), resolve(DIST_DIR, 'public'));
 
-  const targets = parseArgs();
-  for (const { platform, arch } of targets) {
-    await buildOne(platform, arch);
+  const builds = parseArgs();
+  for (const { platform, arch, entry, type } of builds) {
+    await buildBinary(platform, arch, entry, type);
   }
 
-  console.log(`All ${targets.length} build(s) completed!`);
+  console.log(`All ${builds.length} build(s) completed!`);
 };
 
 main().catch((err) => {

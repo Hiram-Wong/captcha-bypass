@@ -1,10 +1,10 @@
 import process from 'node:process';
 
+import type { TSchema } from '@sinclair/typebox';
 import { Value } from '@sinclair/typebox/value';
 import { main } from 'bun';
 import { program } from 'commander';
 
-import { APP_DESC, APP_NAME, APP_VERSION } from '@/utils/appInfo';
 import { BaseCvService } from '@/captcha/base/cv';
 import { detectCaptchaService } from '@/captcha/detect';
 import { ocrCaptchaService } from '@/captcha/ocr';
@@ -27,7 +27,10 @@ import {
   rotateCaptchaSchema,
   slideCaptchaSchema,
 } from '@/modules/captcha/model';
-import type { TSchema } from '@sinclair/typebox';
+
+import { APP_DESC, APP_NAME, APP_VERSION } from '@/utils/appInfo';
+import { fail, success } from '@/utils/response';
+import { isPackaged } from '@/utils/systemInfo';
 
 // ── Validator ──
 
@@ -69,13 +72,17 @@ program
   .requiredOption('--bg <image>', '背景/主图: 文件路径 | URL | Base64')
   .option('--thumb <image>', '小图 (match 模式必填)')
   .action(async (opts) => {
-    const input = validate<DetectCaptchaInput>(detectCaptchaSchema, {
-      type: opts.type,
-      bg: opts.bg,
-      thumb: opts.thumb,
-    });
-    const result = await solveDetectionCaptcha(input);
-    console.log(JSON.stringify(result, null, 2));
+    try {
+      const input = validate<DetectCaptchaInput>(detectCaptchaSchema, {
+        type: opts.type,
+        bg: opts.bg,
+        thumb: opts.thumb,
+      });
+      const result = await solveDetectionCaptcha(input);
+      console.log(JSON.stringify(success(result), null, 2));
+    } catch (err) {
+      console.log(JSON.stringify(fail(err instanceof Error ? err.message || '识别失败' : '识别失败')), null, 2);
+    }
   });
 
 program
@@ -86,14 +93,18 @@ program
   .option('--action <engine>', '识别引擎: onnx | ai', 'onnx')
   .option('--range <chars>', '字符范围, 如 0123456789')
   .action(async (opts) => {
-    const input = validate<OcrCaptchaInput>(ocrCaptchaSchema, {
-      type: opts.type,
-      action: opts.action,
-      bg: opts.bg,
-      range: opts.range,
-    });
-    const result = await solveOcrCaptcha(input);
-    console.log(JSON.stringify(result, null, 2));
+    try {
+      const input = validate<OcrCaptchaInput>(ocrCaptchaSchema, {
+        type: opts.type,
+        action: opts.action,
+        bg: opts.bg,
+        range: opts.range,
+      });
+      const result = await solveOcrCaptcha(input);
+      console.log(JSON.stringify(success(result), null, 2));
+    } catch (err) {
+      console.log(JSON.stringify(fail(err instanceof Error ? err.message || '识别失败' : '识别失败')), null, 2);
+    }
   });
 
 program
@@ -103,13 +114,17 @@ program
   .requiredOption('--bg <image>', '图片/背景图: 文件路径 | URL | Base64')
   .option('--thumb <image>', '小图 (nox/tiktok 模式必填)')
   .action(async (opts) => {
-    const input = validate<RotateCaptchaInput>(rotateCaptchaSchema, {
-      type: opts.type,
-      bg: opts.bg,
-      thumb: opts.thumb,
-    });
-    const result = await solveRotateCaptcha(input);
-    console.log(JSON.stringify(result, null, 2));
+    try {
+      const input = validate<RotateCaptchaInput>(rotateCaptchaSchema, {
+        type: opts.type,
+        bg: opts.bg,
+        thumb: opts.thumb,
+      });
+      const result = await solveRotateCaptcha(input);
+      console.log(JSON.stringify(success(result), null, 2));
+    } catch (err) {
+      console.log(JSON.stringify(fail(err instanceof Error ? err.message || '识别失败' : '识别失败')), null, 2);
+    }
   });
 
 program
@@ -119,15 +134,18 @@ program
   .requiredOption('--bg <image>', '背景图: 文件路径 | URL | Base64')
   .requiredOption('--thumb <image>', '滑块图: 文件路径 | URL | Base64')
   .action(async (opts) => {
-    const input = validate<SlideCaptchaInput>(slideCaptchaSchema, {
-      type: opts.type,
-      bg: opts.bg,
-      thumb: opts.thumb,
-    });
-    const result = await solveSlideCaptcha(input);
-    console.log(JSON.stringify(result, null, 2));
+    try {
+      const input = validate<SlideCaptchaInput>(slideCaptchaSchema, {
+        type: opts.type,
+        bg: opts.bg,
+        thumb: opts.thumb,
+      });
+      const result = await solveSlideCaptcha(input);
+      console.log(JSON.stringify(success(result), null, 2));
+    } catch (err) {
+      console.log(JSON.stringify(fail(err instanceof Error ? err.message || '识别失败' : '识别失败')), null, 2);
+    }
   });
-
 const startCli = (): Promise<void> =>
   program
     .parseAsync()
@@ -137,7 +155,7 @@ const startCli = (): Promise<void> =>
       process.exit(1);
     });
 
-if (import.meta.path === main) {
+if (import.meta.path === main || isPackaged) {
   void startCli();
 }
 

@@ -11,42 +11,38 @@ This project provides a self-hosted service for solving four major types of CAPT
 OCR text/math captchas, rotate-to-align captchas, slide/puzzle captchas, and YOLO object detection captchas.
 All inference runs locally using ONNX deep learning models and OpenCV.js image processing — no GPU or external API dependency.
 
-**Two running modes** (set via `RUN_MODE` env, code default `cli`):
+**Two running modes** (separate binaries):
 
-- **CLI mode** — Direct command-line invocation, outputs JSON to stdout. Best for scripting and one-shot recognition.
-- **Server mode** — HTTP API on `http://127.0.0.1:7788` with REST endpoints and an MCP endpoint for AI agent integration.
-
-> The code default is `cli`. The bundled `.env.example` sets `RUN_MODE=server`, and any copied `.env` value takes priority over the code default. Check `.env` to verify the actual mode.
+- **CLI mode** (`captcha-bypass-cli`) — Direct command-line invocation, outputs JSON to stdout. Best for scripting and one-shot recognition.
+- **Server mode** (`captcha-bypass-server`) — HTTP API on `http://127.0.0.1:7788` with REST endpoints and an MCP endpoint for AI agent integration.
 
 ## Quick Start
 
 ### CLI Mode
 
-To use CLI mode, ensure `.env` does NOT set `RUN_MODE=server`, or override on the command line:
+Use the CLI binary directly:
 
 ```bash
-# Ensure CLI mode (overrides .env)
 # macOS / Linux:
-RUN_MODE=cli ./captcha-bypass ocr --type text --bg ./captcha.png
-# Windows:
-set RUN_MODE=cli && .\captcha-bypass.exe ocr --type text --bg ./captcha.png
+./captcha-bypass-cli ocr --type text --bg ./captcha.png
+./captcha-bypass-cli ocr --type math --bg ./captcha.png --action ai
+./captcha-bypass-cli slide --type match --bg ./bg.png --thumb ./slider.png
+./captcha-bypass-cli --help
 
-# Or simply remove/comment RUN_MODE from .env,
-# then run commands directly:
-./captcha-bypass ocr --type text --bg ./captcha.png
-./captcha-bypass ocr --type math --bg ./captcha.png --action ai
-./captcha-bypass slide --type match --bg ./bg.png --thumb ./slider.png
-./captcha-bypass --help
+# Windows:
+.\captcha-bypass-cli.exe ocr --type text --bg ./captcha.png
 ```
-> **Platform**: On **Windows**, replace `./captcha-bypass` with `.\captcha-bypass.exe`, and use `set VAR=val && ...` instead of `VAR=val ...` for environment variables.
+> **Platform**: On **Windows**, replace `./captcha-bypass-cli` with `.\captcha-bypass-cli.exe`.
 
 Images support local file path, HTTP URL, and Base64 input.
 
 ### Server Mode
 
-If `.env` has `RUN_MODE=server`, the binary starts as HTTP service:
+The server binary starts as an HTTP service:
 
 ```bash
+./captcha-bypass-server
+# or in development:
 bun run dev           # or: bun src/index.ts
 ```
 
@@ -94,8 +90,8 @@ curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
   -d '{"type":"text","action":"onnx","bg":"https://example.com/captcha.png","range":"0123456789"}'
 
 # === CLI mode ===
-./captcha-bypass ocr --type text --bg https://example.com/captcha.png --range 0123456789
-./captcha-bypass ocr --type math --bg ./captcha.png --action ai
+./captcha-bypass-cli ocr --type text --bg https://example.com/captcha.png --range 0123456789
+./captcha-bypass-cli ocr --type math --bg ./captcha.png --action ai
 ```
 
 
@@ -129,8 +125,8 @@ curl -X POST 'http://127.0.0.1:7788/captcha/rotate' \
   -d '{"type":"single","bg":"https://example.com/rotated.png"}'
 
 # === CLI mode ===
-./captcha-bypass rotate --type single --bg ./rotated.png
-./captcha-bypass rotate --type nox --bg ./bg.png --thumb ./thumb.png
+./captcha-bypass-cli rotate --type single --bg ./rotated.png
+./captcha-bypass-cli rotate --type nox --bg ./bg.png --thumb ./thumb.png
 ```
 
 ### 3. Slide Captcha — `POST /captcha/slide`
@@ -163,7 +159,7 @@ curl -X POST 'http://127.0.0.1:7788/captcha/slide' \
   -d '{"type":"match","thumb":"https://example.com/slider.png","bg":"https://example.com/bg.png"}'
 
 # === CLI mode ===
-./captcha-bypass slide --type match --bg ./bg.png --thumb ./slider.png
+./captcha-bypass-cli slide --type match --bg ./bg.png --thumb ./slider.png
 ```
 
 ### 4. Detection Captcha — `POST /captcha/detect`
@@ -205,8 +201,8 @@ curl -X POST 'http://127.0.0.1:7788/captcha/detect' \
   -d '{"type":"detect","bg":"https://example.com/captcha.png"}'
 
 # === CLI mode ===
-./captcha-bypass detect --type detect --bg ./captcha.png
-./captcha-bypass detect --type match --bg ./bg.png --thumb ./thumb.png
+./captcha-bypass-cli detect --type detect --bg ./captcha.png
+./captcha-bypass-cli detect --type match --bg ./bg.png --thumb ./thumb.png
 ```
 
 ### 5. MCP (Model Context Protocol) — `POST /mcp`
@@ -263,14 +259,14 @@ Check `AUTH_TYPE` in `.env` first. If `AUTH_TYPE=0`, no auth header is needed.
 
 When writing scripts that call this service:
 
-- **CLI mode**: Use `child_process` or shell to invoke the binary and parse stdout JSON. Best for simple one-shot calls.
+- **CLI mode**: Use `child_process` or shell to invoke the `captcha-bypass-cli` binary and parse stdout JSON. Best for simple one-shot calls.
 - **Server mode**: Call the HTTP API. Always check `GET /health` first to verify the service is running.
 
 **CLI mode (Node.js/Bun):**
 
 ```javascript
 import { spawnSync } from 'node:child_process';
-const result = spawnSync('./captcha-bypass', ['ocr', '--type', 'text', '--bg', './captcha.png']);
+const result = spawnSync('./captcha-bypass-cli', ['ocr', '--type', 'text', '--bg', './captcha.png']);
 console.log(JSON.parse(result.stdout.toString()));
 // → { code: "AB3D" }
 ```

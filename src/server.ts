@@ -121,7 +121,7 @@ const startServer = async (): Promise<void> => {
   }
 };
 
-if (import.meta.path === main) {
+if (import.meta.path === main || isPackaged) {
   void startServer();
 }
 

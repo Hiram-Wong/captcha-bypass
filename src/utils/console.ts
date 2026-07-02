@@ -11,7 +11,7 @@ export const loggerStartSuccess = () => {
 
 export const loggerStartFail = (err: any) => {
   logger.raw(`${'='.repeat(23)} 服务启动失败 ${'='.repeat(23)}`);
-  logger.error(err instanceof Error ? err.message : err);
+  logger.raw(err instanceof Error ? (err.stack ?? err.message) : err);
   logger.raw('='.repeat(60));
 };
 

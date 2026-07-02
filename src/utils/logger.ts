@@ -2,10 +2,11 @@ import { config } from '@/config';
 
 import { isJson } from './validate';
 
-type LogLevel = 'silly' | 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = 'silly' | 'debug' | 'info' | 'warn' | 'error' | 'none';
+type LogLevelExcludeNone = Exclude<LogLevel, 'none'>;
 type ConsoleMethod = 'log' | 'debug' | 'info' | 'warn' | 'error';
 
-const LEVEL_WEIGHT: Record<LogLevel, number> = {
+const LEVEL_WEIGHT: Record<LogLevelExcludeNone, number> = {
   silly: 0,
   debug: 1,
   info: 2,
@@ -13,7 +14,7 @@ const LEVEL_WEIGHT: Record<LogLevel, number> = {
   error: 4,
 };
 
-const CONSOLE_MAP: Record<LogLevel, ConsoleMethod> = {
+const CONSOLE_MAP: Record<LogLevelExcludeNone, ConsoleMethod> = {
   silly: 'log',
   debug: 'debug',
   info: 'info',
@@ -28,7 +29,7 @@ class Logger {
   private context?: string;
 
   constructor(level?: LogLevel, context?: string) {
-    this.currentLevel = level ?? 'info';
+    this.currentLevel = level ?? 'none';
     this.context = context;
   }
 
@@ -39,9 +40,10 @@ class Logger {
     return Logger.instance;
   }
 
-  private shouldLog(level: LogLevel): boolean {
-    const current = LEVEL_WEIGHT[this.currentLevel] ?? LEVEL_WEIGHT.info;
-    return LEVEL_WEIGHT[level] >= current;
+  private shouldLog(level: LogLevelExcludeNone): boolean {
+    if (this.currentLevel === 'none') return false;
+    if (!LEVEL_WEIGHT[this.currentLevel]) return false;
+    return LEVEL_WEIGHT[level] >= LEVEL_WEIGHT[this.currentLevel];
   }
 
   private getTime() {
@@ -74,7 +76,7 @@ class Logger {
     return arg;
   }
 
-  private print(level: LogLevel, args: any[]) {
+  private print(level: LogLevelExcludeNone, args: any[]) {
     if (!this.shouldLog(level)) return;
 
     const method = CONSOLE_MAP[level];
