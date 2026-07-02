@@ -4,7 +4,11 @@
   "private": true,
   "description": "Captcha bypass service.",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/cli.js",
+  "exports": {
+    "./server": "./dist/server.js",
+    "./cli": "./dist/cli.js"
+  },
   "author": {
     "name": "Hiram-Wong",
     "email": "admin@catni.cn"
@@ -30,11 +34,11 @@
     "generate:token": "bun run ./scripts/generate-token.js"
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.2",
+    "@ai-sdk/openai-compatible": "^3.0.3",
     "@elysia/cors": "^1.4.2",
     "@elysia/openapi": "^1.4.15",
     "@techstark/opencv-js": "^5.0.0-release.1",
-    "ai": "^7.0.9",
+    "ai": "^7.0.11",
     "commander": "^15.0.0",
     "dateformat": "^5.0.3",
     "dotenv": "^17.4.2",
