@@ -32,15 +32,6 @@ const CTX = Symbol('logger.ctx');
 
 const nanoid = (size: number = 16) => customAlphabet('0123456789abcdef', size);
 
-const getIp = (req: Request, server?: RequestIpServer | null) =>
-  req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-  req.headers.get('x-real-ip') ||
-  req.headers.get('x-client-ip') ||
-  req.headers.get('cf-connecting-ip') ||
-  req.headers.get('fastly-client-ip') ||
-  server?.requestIP?.(req)?.address ||
-  '-';
-
 const getTraceId = (req: Request) => {
   const header = req.headers.get('x-trace-id');
   if (header) return header;
@@ -65,6 +56,23 @@ const createLogGenerator = (prefix: string) => (time?: Date | number | null, ind
   return typeof index === 'undefined' || index <= 1 ? `${prefix}-${date}.log` : `${prefix}-${date}.${index}.log`;
   // return `${prefix}-${date}.log`;
 };
+
+const safeParseUrl = (raw: string) => {
+  try {
+    return new URL(raw, 'http://localhost:7788');
+  } catch {
+    return null;
+  }
+};
+
+const getIp = (req: Request, server?: RequestIpServer | null) =>
+  req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+  req.headers.get('x-real-ip') ||
+  req.headers.get('x-client-ip') ||
+  req.headers.get('cf-connecting-ip') ||
+  req.headers.get('fastly-client-ip') ||
+  server?.requestIP?.(req)?.address ||
+  '-';
 
 export const requestLogger = (options: LoggerOptions = {}) => {
   const { enabled = true, dir = 'logs', maxFiles = 7, teeToStdout = false } = options;
@@ -107,12 +115,11 @@ export const requestLogger = (options: LoggerOptions = {}) => {
       (request as any)[CTX] = ctx;
     })
 
-    .onAfterHandle({ as: 'global' }, ({ request, server, set }) => {
+    .onAfterHandle({ as: 'global' }, ({ path, request, server, set }) => {
       const ctx = (request as any)[CTX] as LoggerCtx | undefined;
-
       const cost = ctx?.start ? performance.now() - ctx.start : 0;
 
-      const url = new URL(request.url);
+      const url = safeParseUrl(request.url);
 
       write(accessStream, {
         time: dateFormat(new Date(), "yyyy-mm-dd'T'HH:MM:ss'Z'"),
@@ -126,8 +133,8 @@ export const requestLogger = (options: LoggerOptions = {}) => {
 
         ip: getIp(request, server),
         method: request.method,
-        path: url.pathname,
-        query: url.searchParams.toString(),
+        path,
+        query: url?.searchParams?.toString() || '',
 
         status: set.status ?? 200,
         cost: Number(cost.toFixed(3)),
@@ -137,11 +144,11 @@ export const requestLogger = (options: LoggerOptions = {}) => {
       });
     })
 
-    .onError({ as: 'global' }, ({ request, server, error, code }) => {
+    .onError({ as: 'global' }, ({ path, request, server, error, code }) => {
       const ctx = (request as any)[CTX] as LoggerCtx | undefined;
 
-      const url = new URL(request.url);
-
+      const url = safeParseUrl(request.url);
+      
       write(errorStream, {
         time: dateFormat(new Date(), "yyyy-mm-dd'T'HH:MM:ss'Z'"),
         type: 'error',
@@ -154,8 +161,8 @@ export const requestLogger = (options: LoggerOptions = {}) => {
 
         ip: getIp(request, server),
         method: request.method,
-        path: url.pathname,
-        query: url.searchParams.toString(),
+        path,
+        query: url?.searchParams?.toString() || '',
 
         code,
 
