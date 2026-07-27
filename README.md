@@ -43,8 +43,8 @@ captcha-bypass/
 │   ├── detect.onnx
 │   ├── ocr_dddd.onnx
 │   ├── ocr_dddd.json
-│   ├── ocr_ppv5-cn.onnx
-│   ├── ocr_ppv5-cn.json
+│   ├── ocr_pp.onnx
+│   ├── ocr_pp.json
 │   └── rotate.onnx
 └── public/                    # 可选，静态资源
     ├── favicon.ico
@@ -94,8 +94,8 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 | DETECT_SHAPE       | `number[]`                                                              | `[3,416,416]`             | 模型输入尺寸 [C,H,W]                                                               |
 | DETECT_MEAN        | `number[]`                                                              | `[0,0,0]`                 | 均值标准化                                                                         |
 | DETECT_STD         | `number[]`                                                              | `[1,1,1]`                 | 标准差标准化                                                                       |
-| OCR_MODEL_PATH     | `string`                                                                | `models/ocr_ppv5-cn.onnx` | OCR 模型文件路径                                                                   |
-| OCR_CHARSET_PATH   | `string`                                                                | `models/ocr_ppv5-cn.json` | OCR 字符集文件路径                                                                 |
+| OCR_MODEL_PATH     | `string`                                                                | `models/ocr_pp.onnx` | OCR 模型文件路径                                                                   |
+| OCR_CHARSET_PATH   | `string`                                                                | `models/ocr_pp.json` | OCR 字符集文件路径                                                                 |
 | OCR_CHARSET_RANGES | `string`                                                                | 空字符串                  | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果                  |
 | OCR_SHAPE          | `number[]`                                                              | `[3,48,320]`              | 模型输入尺寸 [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]`                   |
 | OCR_MEAN           | `number`                                                                | `0.5`                     | 均值标准化                                                                         |

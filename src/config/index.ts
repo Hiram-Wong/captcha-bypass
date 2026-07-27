@@ -45,8 +45,8 @@ const ENV_DEFAULTS = {
   DETECT_MEAN: [0, 0, 0],
   DETECT_STD: [1, 1, 1],
 
-  OCR_MODEL_PATH: 'models/ocr_ppv5-cn.onnx',
-  OCR_CHARSET_PATH: 'models/ocr_ppv5-cn.json',
+  OCR_MODEL_PATH: 'models/ocr_pp.onnx',
+  OCR_CHARSET_PATH: 'models/ocr_pp.json',
   OCR_CHARSET_RANGES: '',
   OCR_SHAPE: [3, 48, 320],
   OCR_MEAN: 0.5,

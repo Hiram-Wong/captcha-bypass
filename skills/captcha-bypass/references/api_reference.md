@@ -16,8 +16,8 @@ The table below reflects the code defaults in `src/config/index.ts`. A copied `.
 | `DETECT_SHAPE`       | number[]  | `[3,416,416]` | Model input shape [C,H,W]                                       |
 | `DETECT_MEAN`        | number[]  | `[0,0,0]`   | Mean normalization                                               |
 | `DETECT_STD`         | number[]  | `[1,1,1]`   | Std normalization                                                |
-| `OCR_MODEL_PATH`     | string  | `models/ocr_ppv5-cn.onnx` | OCR model path                                                  |
-| `OCR_CHARSET_PATH`   | string  | `models/ocr_ppv5-cn.json` | OCR charset file path                                           |
+| `OCR_MODEL_PATH`     | string  | `models/ocr_pp.onnx` | OCR model path                                                  |
+| `OCR_CHARSET_PATH`   | string  | `models/ocr_pp.json` | OCR charset file path                                           |
 | `OCR_CHARSET_RANGES` | string  | ""                        | Charset filter<br>e.g. `"0123456789"`                           |
 | `OCR_SHAPE`          | number[]  | `[3,48,320]`            | Model input shape [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]` |
 | `OCR_MEAN`           | number  | `0.5`                     | Mean normalization                                               |

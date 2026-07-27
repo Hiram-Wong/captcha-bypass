@@ -1,11 +1,12 @@
 ## 1.1.1
 
 - 修复: 请求日志中间件部分情况下解析数据报错(扫描器)
+- 变动: ocr pp 模型调整为 [ppv6 模型](https://www.modelscope.cn/models/RapidAI/RapidOCR/tree/master/onnx/PP-OCRv6/rec)
 
 ## 1.1.0
 
 - 特性: 支持 cli 模式
-- 优化: ocr 适配 ppv5 模型
+- 优化: ocr 适配 [ppv5 模型](https://www.modelscope.cn/models/RapidAI/RapidOCR/tree/master/onnx/PP-OCRv5/rec)
 - 优化: 使用环境变量替代硬编码
 - 优化: 重构匈牙利算法, 并下沉到 ort 文件
 - 修复: detect match 卡死
