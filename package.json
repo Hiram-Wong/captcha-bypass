@@ -1,6 +1,6 @@
 {
   "name": "captcha-bypass",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Captcha bypass service.",
   "type": "module",
@@ -31,20 +31,21 @@
     "build:linux": "bun scripts/build.js --platform linux",
     "build:linux:x64": "bun scripts/build.js --platform linux --arch x64",
     "build:linux:arm64": "bun scripts/build.js --platform linux --arch arm64",
-    "generate:token": "bun run ./scripts/generate-token.js"
+    "generate:token": "bun run ./scripts/generate-token.js",
+    "convert:charset": "bun run ./scripts/convert-charset.js"
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.3",
+    "@ai-sdk/openai-compatible": "^3.0.14",
     "@elysia/cors": "^1.4.2",
     "@elysia/openapi": "^1.4.15",
     "@techstark/opencv-js": "^5.0.0-release.1",
-    "ai": "^7.0.11",
+    "ai": "^7.0.37",
     "commander": "^15.0.0",
     "dateformat": "^5.0.3",
     "dotenv": "^17.4.2",
     "elysia": "^1.4.29",
     "jimp": "^1.6.1",
-    "nanoid": "^5.1.16",
+    "nanoid": "^6.0.0",
     "onnxruntime-web": "^1.27.0",
     "rotating-file-stream": "^3.2.9"
   },
