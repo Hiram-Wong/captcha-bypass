@@ -148,7 +148,7 @@ export const requestLogger = (options: LoggerOptions = {}) => {
       const ctx = (request as any)[CTX] as LoggerCtx | undefined;
 
       const url = safeParseUrl(request.url);
-      
+
       write(errorStream, {
         time: dateFormat(new Date(), "yyyy-mm-dd'T'HH:MM:ss'Z'"),
         type: 'error',

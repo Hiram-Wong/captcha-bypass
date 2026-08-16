@@ -41,7 +41,7 @@ const main = async () => {
     process.exit(1);
   }
 
-  if (!await isFileExists(input)) {
+  if (!(await isFileExists(input))) {
     console.error(`Input file does not exist: ${input}`);
     process.exit(1);
   }
