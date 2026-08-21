@@ -1,2 +1,6 @@
+target: latest
+packageManager: bun
 reject:
   - typescript
+cooldown: 3d
+cache: true

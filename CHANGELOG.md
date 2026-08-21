@@ -2,6 +2,7 @@
 
 - 修复: 请求日志中间件部分情况下解析数据报错(扫描器)
 - 变动: ocr pp 模型调整为 [ppv6 模型](https://www.modelscope.cn/models/RapidAI/RapidOCR/tree/master/onnx/PP-OCRv6/rec)
+- 变动: 格式化配置项
 
 ## 1.1.0
 
