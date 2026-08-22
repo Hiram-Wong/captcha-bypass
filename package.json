@@ -3,24 +3,30 @@
   "version": "1.1.1",
   "private": true,
   "description": "Captcha bypass service.",
+  "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
+  "license": "MIT",
+  "author": {
+    "name": "Hiram-Wong",
+    "email": "admin@catni.cn"
+  },
   "type": "module",
   "main": "dist/cli.js",
   "exports": {
     "./server": "./dist/server.js",
     "./cli": "./dist/cli.js"
   },
-  "author": {
-    "name": "Hiram-Wong",
-    "email": "admin@catni.cn"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
   "scripts": {
-    "format": "bunx prettier --write src scripts",
+    "deps:check": "ncu",
+    "deps:update": "ncu -u && bun install",
+    "format": "oxfmt --write",
+    "format:check": "oxfmt --check",
+    "lint": "oxlint --fix",
+    "lint:check": "oxlint",
+    "typecheck": "tsc --noEmit",
+    "check": "bun lint:check && bun format:check && bun typecheck",
+    "prepare": "husky",
     "dev": "bun --watch src/server.ts",
     "cli": "bun src/cli.ts",
-    "npmcheck": "ncu -u",
-    "typecheck": "tsc --noEmit",
     "build": "bun scripts/build.js",
     "build:win": "bun scripts/build.js --platform win32",
     "build:win:x64": "bun scripts/build.js --platform win32 --arch x64",
@@ -35,25 +41,48 @@
     "convert:charset": "bun run ./scripts/convert-charset.js"
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.14",
+    "@ai-sdk/openai-compatible": "^3.0.32",
     "@elysia/cors": "^1.4.2",
     "@elysia/openapi": "^1.4.15",
     "@techstark/opencv-js": "^5.0.0-release.1",
-    "ai": "^7.0.37",
+    "ai": "^7.0.70",
     "commander": "^15.0.0",
     "dateformat": "^5.0.3",
     "dotenv": "^17.4.2",
     "elysia": "^1.4.29",
     "jimp": "^1.6.1",
-    "nanoid": "^6.0.0",
+    "nanoid": "^6.0.1",
     "onnxruntime-web": "^1.27.0",
-    "rotating-file-stream": "^3.2.9"
+    "rotating-file-stream": "^3.2.10"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
     "@types/bun": "^1.3.14",
     "@types/dateformat": "^5.0.3",
-    "npm-check-updates": "^22.2.9",
-    "typescript": "^5.9.3"
+    "commitizen": "^4.3.2",
+    "cz-conventional-changelog": "^3.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "npm-check-updates": "^23.0.2",
+    "oxfmt": "^0.64.0",
+    "oxlint": "^1.79.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "typescript": "~5.8.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs,cjs}": [
+      "oxlint --fix",
+      "oxfmt --write"
+    ],
+    "*.{json,yml,yaml,md,css,html}": [
+      "oxfmt --write"
+    ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   },
   "packageManager": "bun@1.3.14"
 }
