@@ -232,7 +232,7 @@ class RotateCvCaptchaService extends BaseCvService {
     ];
     const RING_SAMPLES = 180;
 
-    const precomputeRingPoints = (width: number, height: number, refWidth: number) => {
+    const precomputeRingPoints = (width: number, height: number, _refWidth: number) => {
       const cx = width / 2;
       const cy = height / 2;
       const radius = (Math.min(width, height) / 2) * RING_RADIUS_SCALE;
@@ -297,8 +297,8 @@ class RotateCvCaptchaService extends BaseCvService {
             new cv.Scalar(0, 0, 0, 0),
           );
 
-          const rData = rotated.data as Uint8Array;
-          const bData = bgRGBA.data as Uint8Array;
+          const rData = rotated.data;
+          const bData = bgRGBA.data;
 
           let totalDist = 0;
           let validCount = 0;

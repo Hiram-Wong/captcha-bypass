@@ -91,7 +91,6 @@ class OcrAiCaptchaService extends AiCaptchaService {
 
     let formula = code
       .normalize('NFKC') // 规范化字符格式
-
       // latex 包裹处理
       .replace(/\$\$(.*?)\$\$/gs, '$1')
       .replace(/\\\[(.*?)\\\]/gs, '$1')

@@ -4,33 +4,33 @@
 
 The table below reflects the code defaults in `src/config/index.ts`. A copied `.env` file can override them; the bundled `.env.example` currently sets `NODE_ENV=production`, and `LOG_LEVEL=warn`.
 
-| Env Variable         | Type    | Default     | Description                                                     |
-| -------------------- | ------- | ----------- | --------------------------------------------------------------- |
-| `NODE_ENV`           | string  | development | `development`, or `production`                                  |
-| `LOG_LEVEL`          | string  | none        | Log level<br>`silly` < `debug` < `info` < `warn` < `error` < `none` |
-| `PORT`               | number  | 7788        | Service port (server mode only)                                  |
-| `OPENAPI_ENABLE`     | boolean | false       | Enable Swagger UI at `/docs`                                    |
-| `AUTH_TYPE`          | 0\|1\|2 | 0           | Auth type<br>0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
-| `AUTH_KEY`           | string  | ""          | Auth key<br>Used when AUTH_TYPE=1 or 2                          |
-| `DETECT_MODEL_PATH`  | string  | `models/detect.onnx` | Detect model path                                      |
-| `DETECT_SHAPE`       | number[]  | `[3,416,416]` | Model input shape [C,H,W]                                       |
-| `DETECT_MEAN`        | number[]  | `[0,0,0]`   | Mean normalization                                               |
-| `DETECT_STD`         | number[]  | `[1,1,1]`   | Std normalization                                                |
-| `OCR_MODEL_PATH`     | string  | `models/ocr_pp.onnx` | OCR model path                                                  |
-| `OCR_CHARSET_PATH`   | string  | `models/ocr_pp.json` | OCR charset file path                                           |
-| `OCR_CHARSET_RANGES` | string  | ""                        | Charset filter<br>e.g. `"0123456789"`                           |
-| `OCR_SHAPE`          | number[]  | `[3,48,320]`            | Model input shape [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]` |
-| `OCR_MEAN`           | number  | `0.5`                     | Mean normalization                                               |
-| `OCR_STD`            | number  | `0.5`                     | Std normalization                                                |
-| `OCR_CTC_LAYOUT`     | "ntc"\|"tnc" | `ntc`               | CTC layout<br>ppocr: ntc / ddddocr: tnc                         |
-| `ROTATE_MODEL_PATH`  | string  | `models/rotate.onnx`      | Rotate model path                                                |
-| `ROTATE_SHAPE`       | number[]  | `[3,224,224]`           | Model input shape [C,H,W]                                       |
-| `ROTATE_MEAN`        | number[]  | `[0.485,0.456,0.406]`  | Mean normalization                                               |
-| `ROTATE_STD`         | number[]  | `[0.229,0.224,0.225]`  | Std normalization                                                |
-| `OPENAI_BASE_URL`    | string  | ""                        | OpenAI API base URL<br>Only `/chat/completions` supported        |
-| `OPENAI_API_KEY`     | string  | ""          | OpenAI API key                                                  |
-| `OPENAI_OCR_MODEL`   | string  | PaddleOCR-VL-1.6 | OCR-specific model name<br>Recommended: PaddleOCR, DeepSeek-OCR, HunyuanOCR |
-| `OPENAI_MODEL`       | string  | gpt-5.5     | General model name                                                |
+| Env Variable         | Type         | Default               | Description                                                                  |
+| -------------------- | ------------ | --------------------- | ---------------------------------------------------------------------------- |
+| `NODE_ENV`           | string       | development           | `development`, or `production`                                               |
+| `LOG_LEVEL`          | string       | none                  | Log level<br>`silly` < `debug` < `info` < `warn` < `error` < `none`          |
+| `PORT`               | number       | 7788                  | Service port (server mode only)                                              |
+| `OPENAPI_ENABLE`     | boolean      | false                 | Enable Swagger UI at `/docs`                                                 |
+| `AUTH_TYPE`          | 0\|1\|2      | 0                     | Auth type<br>0=disabled, 1=fixed token, 2=timestamp signature (3-min expiry) |
+| `AUTH_KEY`           | string       | ""                    | Auth key<br>Used when AUTH_TYPE=1 or 2                                       |
+| `DETECT_MODEL_PATH`  | string       | `models/detect.onnx`  | Detect model path                                                            |
+| `DETECT_SHAPE`       | number[]     | `[3,416,416]`         | Model input shape [C,H,W]                                                    |
+| `DETECT_MEAN`        | number[]     | `[0,0,0]`             | Mean normalization                                                           |
+| `DETECT_STD`         | number[]     | `[1,1,1]`             | Std normalization                                                            |
+| `OCR_MODEL_PATH`     | string       | `models/ocr_pp.onnx`  | OCR model path                                                               |
+| `OCR_CHARSET_PATH`   | string       | `models/ocr_pp.json`  | OCR charset file path                                                        |
+| `OCR_CHARSET_RANGES` | string       | ""                    | Charset filter<br>e.g. `"0123456789"`                                        |
+| `OCR_SHAPE`          | number[]     | `[3,48,320]`          | Model input shape [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]`        |
+| `OCR_MEAN`           | number       | `0.5`                 | Mean normalization                                                           |
+| `OCR_STD`            | number       | `0.5`                 | Std normalization                                                            |
+| `OCR_CTC_LAYOUT`     | "ntc"\|"tnc" | `ntc`                 | CTC layout<br>ppocr: ntc / ddddocr: tnc                                      |
+| `ROTATE_MODEL_PATH`  | string       | `models/rotate.onnx`  | Rotate model path                                                            |
+| `ROTATE_SHAPE`       | number[]     | `[3,224,224]`         | Model input shape [C,H,W]                                                    |
+| `ROTATE_MEAN`        | number[]     | `[0.485,0.456,0.406]` | Mean normalization                                                           |
+| `ROTATE_STD`         | number[]     | `[0.229,0.224,0.225]` | Std normalization                                                            |
+| `OPENAI_BASE_URL`    | string       | ""                    | OpenAI API base URL<br>Only `/chat/completions` supported                    |
+| `OPENAI_API_KEY`     | string       | ""                    | OpenAI API key                                                               |
+| `OPENAI_OCR_MODEL`   | string       | PaddleOCR-VL-1.6      | OCR-specific model name<br>Recommended: PaddleOCR, DeepSeek-OCR, HunyuanOCR  |
+| `OPENAI_MODEL`       | string       | gpt-5.5               | General model name                                                           |
 
 ## Endpoints
 
@@ -65,11 +65,11 @@ Recognize text-based or arithmetic CAPTCHA images.
 
 **Request schema:**
 
-| Field    | Type                 | Required | Description                                                                                                                                                                     |
-| -------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `type`   | `"text"` \| `"math"` | Yes      | CAPTCHA type                                                                                                                                                                    |
-| `bg`     | string \| File       | Yes      | Image as Base64, URL, or uploaded file                                                                                                                                          |
-| `action` | `"ai"` \| `"onnx"`   | No       | Recognition engine: `onnx` uses local ONNX model (default, fast), `ai` uses LLM vision API for text extraction (higher accuracy for complex text captchas)                      |
+| Field    | Type                 | Required | Description                                                                                                                                                                                      |
+| -------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `type`   | `"text"` \| `"math"` | Yes      | CAPTCHA type                                                                                                                                                                                     |
+| `bg`     | string \| File       | Yes      | Image as Base64, URL, or uploaded file                                                                                                                                                           |
+| `action` | `"ai"` \| `"onnx"`   | No       | Recognition engine: `onnx` uses local ONNX model (default, fast), `ai` uses LLM vision API for text extraction (higher accuracy for complex text captchas)                                       |
 | `range`  | string               | No       | Character set filter. Narrows recognition to the specified characters only. Works for both `text` and `math` types. Example: `"0123456789"` for digits, `"0123456789+-*/"` for math expressions. |
 
 **Success response (200):**
@@ -145,10 +145,10 @@ Determine the rotation angle to align a rotated CAPTCHA image.
 
 **Request schema:**
 
-| Field   | Type                                | Required | Description                                                              |
-| ------- | ----------------------------------- | -------- | ------------------------------------------------------------------------ |
-| `type`  | `"single"` \| `"nox"` \| `"tiktok"` | Yes      | Algorithm type                                                           |
-| `bg`    | string \| File                      | Yes      | Image to rotate (single), or background/reference image (nox/tiktok)    |
+| Field   | Type                                | Required | Description                                                                                     |
+| ------- | ----------------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `type`  | `"single"` \| `"nox"` \| `"tiktok"` | Yes      | Algorithm type                                                                                  |
+| `bg`    | string \| File                      | Yes      | Image to rotate (single), or background/reference image (nox/tiktok)                            |
 | `thumb` | string \| File                      | No       | Foreground/rotated image for comparison. Required for `nox` and `tiktok`; ignored for `single`. |
 
 **Algorithm descriptions:**
@@ -275,11 +275,11 @@ Detect objects using YOLO-style object detection, or match thumb objects to a ba
 
 **Request schema:**
 
-| Field   | Type                      | Required                                            | Description                            |
-| ------- | ------------------------- | --------------------------------------------------- | -------------------------------------- |
-| `type`  | `"detect"` \| `"match"`   | Yes                                                 | `detect`: single-image. `match`: two-image Hungarian matching. |
-| `bg`    | string \| File            | Yes                                                 | Image to detect, or background for match |
-| `thumb` | string \| File            | Required for `match`; not needed for `detect`       | Reference image for Hungarian matching |
+| Field   | Type                    | Required                                      | Description                                                    |
+| ------- | ----------------------- | --------------------------------------------- | -------------------------------------------------------------- |
+| `type`  | `"detect"` \| `"match"` | Yes                                           | `detect`: single-image. `match`: two-image Hungarian matching. |
+| `bg`    | string \| File          | Yes                                           | Image to detect, or background for match                       |
+| `thumb` | string \| File          | Required for `match`; not needed for `detect` | Reference image for Hungarian matching                         |
 
 **Success response (200):**
 
@@ -337,12 +337,12 @@ MCP (Model Context Protocol) Streamable HTTP endpoint for AI agent integration. 
 
 **Available tools:**
 
-| Tool     | Description              | Key arguments                      |
-| -------- | ------------------------ | ---------------------------------- |
+| Tool     | Description              | Key arguments                                                       |
+| -------- | ------------------------ | ------------------------------------------------------------------- |
 | `ocr`    | Text/math OCR            | `type`, `bg`, `action`(optional, default `onnx`), `range`(optional) |
-| `rotate` | Rotation angle detection | `type`, `bg`, `thumb`(optional)    |
-| `slide`  | Slider position matching | `type`, `thumb`, `bg`              |
-| `detect` | Object detection         | `type`, `bg`, `thumb`(optional)    |
+| `rotate` | Rotation angle detection | `type`, `bg`, `thumb`(optional)                                     |
+| `slide`  | Slider position matching | `type`, `thumb`, `bg`                                               |
+| `detect` | Object detection         | `type`, `bg`, `thumb`(optional)                                     |
 
 **Example flow:**
 
@@ -426,6 +426,7 @@ Supported formats: PNG, JPEG, WebP, BMP, TIFF.
 # Or via bun
 bun cli -- ocr --type text --bg ./captcha.png
 ```
+
 > **Platform**: On **Windows**, replace `./captcha-bypass-cli` with `.\captcha-bypass-cli.exe`.
 
 ### Server Mode

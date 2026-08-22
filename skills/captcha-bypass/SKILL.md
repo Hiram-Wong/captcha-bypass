@@ -32,6 +32,7 @@ Use the CLI binary directly:
 # Windows:
 .\captcha-bypass-cli.exe ocr --type text --bg ./captcha.png
 ```
+
 > **Platform**: On **Windows**, replace `./captcha-bypass-cli` with `.\captcha-bypass-cli.exe`.
 
 Images support local file path, HTTP URL, and Base64 input.
@@ -61,11 +62,11 @@ Recognize text-based or arithmetic CAPTCHA images.
 
 **Request body (JSON):**
 
-| Field    | Type               | Required | Description                                                           |
-| -------- | ------------------ | -------- | --------------------------------------------------------------------- |
-| `type`   | `"text" \| "math"` | Yes      | `text` for text captcha, `math` for arithmetic captcha                |
-| `bg`     | `string \| File`   | Yes      | Image input: Base64 string, HTTP(S) URL, or uploaded file (multipart) |
-| `action` | `"ai" \| "onnx"`   | No       | Recognition engine: `onnx` uses local ONNX model (default), `ai` uses LLM vision API for text extraction |
+| Field    | Type               | Required | Description                                                                                                                                                            |
+| -------- | ------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`   | `"text" \| "math"` | Yes      | `text` for text captcha, `math` for arithmetic captcha                                                                                                                 |
+| `bg`     | `string \| File`   | Yes      | Image input: Base64 string, HTTP(S) URL, or uploaded file (multipart)                                                                                                  |
+| `action` | `"ai" \| "onnx"`   | No       | Recognition engine: `onnx` uses local ONNX model (default), `ai` uses LLM vision API for text extraction                                                               |
 | `range`  | `string`           | No       | Character set filter. Narrows recognition to specific characters, e.g. `"0123456789"` for digits, `"0123456789+-*/"` for math. Works for both `text` and `math` types. |
 
 **Response:**
@@ -93,7 +94,6 @@ curl -X POST 'http://127.0.0.1:7788/captcha/ocr' \
 ./captcha-bypass-cli ocr --type text --bg https://example.com/captcha.png --range 0123456789
 ./captcha-bypass-cli ocr --type math --bg ./captcha.png --action ai
 ```
-
 
 ### 2. Rotate Captcha — `POST /captcha/rotate`
 
@@ -168,11 +168,11 @@ Detect objects in captcha images using YOLO-style object detection, or match thu
 
 **Request body (JSON):**
 
-| Field   | Type                        | Required | Description                                 |
-| ------- | --------------------------- | -------- | ------------------------------------------- |
-| `type`  | `"detect" \| "match"`       | Yes      | `detect`: single-image detection. `match`: match thumb to bg. |
-| `bg`    | `string \| File`            | Yes      | Image to detect / background for match       |
-| `thumb` | `string \| File`            | No       | Reference image (required for `match`)       |
+| Field   | Type                  | Required | Description                                                   |
+| ------- | --------------------- | -------- | ------------------------------------------------------------- |
+| `type`  | `"detect" \| "match"` | Yes      | `detect`: single-image detection. `match`: match thumb to bg. |
+| `bg`    | `string \| File`      | Yes      | Image to detect / background for match                        |
+| `thumb` | `string \| File`      | No       | Reference image (required for `match`)                        |
 
 **Response:**
 
@@ -229,7 +229,16 @@ curl -X POST 'http://127.0.0.1:7788/mcp' \
 No authentication required. Returns service metadata including app name, homepage, version, and current timestamp.
 
 ```json
-{ "status": 0, "data": { "name": "captcha-bypass", "homepage": "https://github.com/Hiram-Wong/captcha-bypass", "version": "1.0.9", "timestamp": 1781719500449 }, "msg": "success" }
+{
+  "status": 0,
+  "data": {
+    "name": "captcha-bypass",
+    "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
+    "version": "1.0.9",
+    "timestamp": 1781719500449
+  },
+  "msg": "success"
+}
 ```
 
 ## Image Input Formats

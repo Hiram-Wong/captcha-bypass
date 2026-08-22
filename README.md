@@ -13,7 +13,7 @@
 [![][github-release-shield]][github-release-link]
 [![][github-license-shield]][github-license-link]
 [![][github-docker-shield]][github-docker-link]
-[![][platform-shield]]()
+[![][platform-shield]][github-link]
 
 </div>
 <div align="center">
@@ -82,33 +82,33 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 
 ### 环境变量
 
-| 配置               | 类型                                                                    | 默认值                    | 说明                                                                               |
-| :----------------- | :---------------------------------------------------------------------- | :------------------------ | :--------------------------------------------------------------------------------- |
-| NODE_ENV           | `"development"` \| `"production"`                                       | development               | 运行环境                                                                           |
-| LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` \| `"none"` | none                      | 日志级别<br>从低到高：silly < debug < info < warn < error<br>`none` 表示不输出日志 |
-| PORT               | `number`                                                                | 7788                      | 服务端口（仅 server 模式）                                                         |
-| OPENAPI_ENABLE     | `boolean`                                                               | false                     | 是否启用 OpenAPI 文档（仅 server 模式）                                            |
-| AUTH_TYPE          | `0` \| `1` \| `2`                                                       | 0                         | 认证类型<br>0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)                         |
-| AUTH_KEY           | `string`                                                                | 空字符串                  | 认证密钥<br>AUTH_TYPE=1/2 时使用                                                   |
-| DETECT_MODEL_PATH  | `string`                                                                | `models/detect.onnx`      | Detect 模型文件路径                                                                |
-| DETECT_SHAPE       | `number[]`                                                              | `[3,416,416]`             | 模型输入尺寸 [C,H,W]                                                               |
-| DETECT_MEAN        | `number[]`                                                              | `[0,0,0]`                 | 均值标准化                                                                         |
-| DETECT_STD         | `number[]`                                                              | `[1,1,1]`                 | 标准差标准化                                                                       |
-| OCR_MODEL_PATH     | `string`                                                                | `models/ocr_pp.onnx` | OCR 模型文件路径                                                                   |
-| OCR_CHARSET_PATH   | `string`                                                                | `models/ocr_pp.json` | OCR 字符集文件路径                                                                 |
-| OCR_CHARSET_RANGES | `string`                                                                | 空字符串                  | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果                  |
-| OCR_SHAPE          | `number[]`                                                              | `[3,48,320]`              | 模型输入尺寸 [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]`                   |
-| OCR_MEAN           | `number`                                                                | `0.5`                     | 均值标准化                                                                         |
-| OCR_STD            | `number`                                                                | `0.5`                     | 标准差标准化                                                                       |
-| OCR_CTC_LAYOUT     | `"ntc"` \| `"tnc"`                                                      | `ntc`                     | CTC 布局<br>ppocr: ntc / ddddocr: tnc                                              |
-| ROTATE_MODEL_PATH  | `string`                                                                | `models/rotate.onnx`      | ROTATE 模型文件路径                                                                |
-| ROTATE_SHAPE       | `number[]`                                                              | `[3,224,224]`             | 模型输入尺寸 [C,H,W]                                                               |
-| ROTATE_MEAN        | `number[]`                                                              | `[0.485,0.456,0.406]`     | 均值标准化                                                                         |
-| ROTATE_STD         | `number[]`                                                              | `[0.229,0.224,0.225]`     | 标准差标准化                                                                       |
-| OPENAI_BASE_URL    | `string`                                                                | 空字符串                  | OpenAI API 地址<br>仅支持 `/chat/completions`                                      |
-| OPENAI_API_KEY     | `string`                                                                | 空字符串                  | OpenAI API 密钥                                                                    |
-| OPENAI_OCR_MODEL   | `string`                                                                | PaddleOCR-VL-1.6          | OCR 专用模型名称<br>推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR                      |
-| OPENAI_MODEL       | `string`                                                                | gpt-5.5                   | 通用模型名称                                                                       |
+| 配置               | 类型                                                                    | 默认值                | 说明                                                                               |
+| :----------------- | :---------------------------------------------------------------------- | :-------------------- | :--------------------------------------------------------------------------------- |
+| NODE_ENV           | `"development"` \| `"production"`                                       | development           | 运行环境                                                                           |
+| LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` \| `"none"` | none                  | 日志级别<br>从低到高：silly < debug < info < warn < error<br>`none` 表示不输出日志 |
+| PORT               | `number`                                                                | 7788                  | 服务端口（仅 server 模式）                                                         |
+| OPENAPI_ENABLE     | `boolean`                                                               | false                 | 是否启用 OpenAPI 文档（仅 server 模式）                                            |
+| AUTH_TYPE          | `0` \| `1` \| `2`                                                       | 0                     | 认证类型<br>0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)                         |
+| AUTH_KEY           | `string`                                                                | 空字符串              | 认证密钥<br>AUTH_TYPE=1/2 时使用                                                   |
+| DETECT_MODEL_PATH  | `string`                                                                | `models/detect.onnx`  | Detect 模型文件路径                                                                |
+| DETECT_SHAPE       | `number[]`                                                              | `[3,416,416]`         | 模型输入尺寸 [C,H,W]                                                               |
+| DETECT_MEAN        | `number[]`                                                              | `[0,0,0]`             | 均值标准化                                                                         |
+| DETECT_STD         | `number[]`                                                              | `[1,1,1]`             | 标准差标准化                                                                       |
+| OCR_MODEL_PATH     | `string`                                                                | `models/ocr_pp.onnx`  | OCR 模型文件路径                                                                   |
+| OCR_CHARSET_PATH   | `string`                                                                | `models/ocr_pp.json`  | OCR 字符集文件路径                                                                 |
+| OCR_CHARSET_RANGES | `string`                                                                | 空字符串              | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果                  |
+| OCR_SHAPE          | `number[]`                                                              | `[3,48,320]`          | 模型输入尺寸 [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]`                   |
+| OCR_MEAN           | `number`                                                                | `0.5`                 | 均值标准化                                                                         |
+| OCR_STD            | `number`                                                                | `0.5`                 | 标准差标准化                                                                       |
+| OCR_CTC_LAYOUT     | `"ntc"` \| `"tnc"`                                                      | `ntc`                 | CTC 布局<br>ppocr: ntc / ddddocr: tnc                                              |
+| ROTATE_MODEL_PATH  | `string`                                                                | `models/rotate.onnx`  | ROTATE 模型文件路径                                                                |
+| ROTATE_SHAPE       | `number[]`                                                              | `[3,224,224]`         | 模型输入尺寸 [C,H,W]                                                               |
+| ROTATE_MEAN        | `number[]`                                                              | `[0.485,0.456,0.406]` | 均值标准化                                                                         |
+| ROTATE_STD         | `number[]`                                                              | `[0.229,0.224,0.225]` | 标准差标准化                                                                       |
+| OPENAI_BASE_URL    | `string`                                                                | 空字符串              | OpenAI API 地址<br>仅支持 `/chat/completions`                                      |
+| OPENAI_API_KEY     | `string`                                                                | 空字符串              | OpenAI API 密钥                                                                    |
+| OPENAI_OCR_MODEL   | `string`                                                                | PaddleOCR-VL-1.6      | OCR 专用模型名称<br>推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR                      |
+| OPENAI_MODEL       | `string`                                                                | gpt-5.5               | 通用模型名称                                                                       |
 
 ### 参数说明
 
@@ -397,6 +397,7 @@ PP_OCR 模型版权归[PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR)�
 
 <!-- Links & Images -->
 
+[github-link]: https://github.com/Hiram-Wong/captcha-bypass
 [github-release-shield]: https://img.shields.io/github/v/release/Hiram-Wong/captcha-bypass?label=Release&logo=github
 [github-release-link]: https://github.com/Hiram-Wong/captcha-bypass/releases
 [github-docker-shield]: https://img.shields.io/badge/dynamic/json?url=https://ghcr-badge.elias.eu.org/api/Hiram-Wong/captcha-bypass/captcha-bypass&query=%24.downloadCount&logo=docker&label=Docker%20Pulls

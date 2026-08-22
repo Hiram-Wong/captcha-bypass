@@ -2,8 +2,6 @@ import { readFile, writeFile } from 'node:fs/promises';
 
 import { argv, file } from 'bun';
 
-const args = argv.slice(2);
-
 const isFileExists = async (path) => {
   const pathFile = file(path);
   try {
