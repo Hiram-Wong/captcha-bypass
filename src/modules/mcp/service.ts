@@ -5,7 +5,7 @@ import {
   solveDetectionCaptcha,
 } from '@/modules/captcha/service';
 import { APP_VERSION } from '@/utils/appInfo';
-import { isJsonRpcV2 } from '@/utils/validate';
+import { isJSONRpcV2 } from '@/utils/validate';
 
 // ── JSON-RPC 2.0 errors ──
 
@@ -282,7 +282,7 @@ async function handleToolCall(req: JsonRpcRequest): Promise<JsonRpcResponse> {
 // ── MCP message dispatcher ──
 
 export async function handleMcpMessage(message: unknown): Promise<JsonRpcResponse> {
-  if (!isJsonRpcV2(message)) {
+  if (!isJSONRpcV2(message)) {
     return rpc.error(null, JsonRpcError.INVALID_REQUEST);
   }
 

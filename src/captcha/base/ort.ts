@@ -2,12 +2,13 @@ import { mkdir, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { CryptoHasher, file, JSON5, write } from 'bun';
-import { InferenceSession, Tensor, env as ortEnv } from 'onnxruntime-web';
+import type { Tensor } from 'onnxruntime-web';
+import { InferenceSession, env as ortEnv } from 'onnxruntime-web';
 
 import { log } from '@/utils/logger';
 import { ROOT_PATH } from '@/utils/path';
 import { isPackaged } from '@/utils/systemInfo';
-import { isJsonStr } from '@/utils/validate';
+import { isJSONStr } from '@/utils/validate';
 
 import wasmBin from '../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm' with { type: 'file' };
 import mjsBin from '../../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs' with { type: 'file' };
@@ -138,7 +139,7 @@ export class BaseOrtservice {
     if (!input) throw new Error('Charset is empty');
 
     let charset: string[] = [];
-    if (isJsonStr(input)) {
+    if (isJSONStr(input)) {
       const raw = JSON5.parse(input);
       if (!Array.isArray(raw)) throw new Error('Invalid charset format');
       charset = raw;
@@ -232,7 +233,7 @@ export class BaseOrtservice {
         let maxId = 0;
         let maxVal = -Infinity;
 
-        if (!!allowedIndices?.size) {
+        if (allowedIndices?.size) {
           for (const c of allowedIndices) {
             const val = values[frameOffset + c];
 

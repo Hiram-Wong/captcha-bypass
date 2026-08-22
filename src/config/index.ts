@@ -3,7 +3,7 @@ import { JSON5 } from 'bun';
 import { type Static } from 'elysia';
 import { t, TypeCompiler } from 'elysia/type-system';
 
-import { isJsonStr } from '@/utils/validate';
+import { isJSONArray, isJSONStr } from '@/utils/validate';
 
 const booleanSchema = t
   .Transform(t.Union([t.Boolean(), t.String(), t.Undefined()]))
@@ -20,12 +20,12 @@ const booleanSchema = t
   })
   .Encode(String);
 
-const numericArraySchema = (itemOptions: { minimum?: number; multipleOf?: number }, fallback: number[]) =>
+const numericArraySchema = (itemOptions: { minimum?: number; multipleOf?: number }, _fallback: number[]) =>
   t
     .Transform(t.Union([t.Array(t.Numeric(itemOptions)), t.String(), t.Undefined()]))
     .Decode((value): number[] => {
-      if (Array.isArray(value)) return value;
-      if (isJsonStr(value)) return JSON5.parse(value) as number[];
+      if (isJSONArray(value)) return value;
+      if (isJSONStr(value)) return JSON5.parse(value) as number[];
 
       throw new Error(`Invalid numeric array: ${value}`);
     })

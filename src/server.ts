@@ -20,7 +20,7 @@ import consoleUtils from '@/utils/console';
 import { log } from '@/utils/logger';
 import { fail } from '@/utils/response';
 import { isPackaged } from '@/utils/systemInfo';
-import { isJsonStr } from '@/utils/validate';
+import { isJSONStr } from '@/utils/validate';
 
 const logger = log.withContext('SYSTEM');
 
@@ -45,10 +45,9 @@ const setupServer = async (): Promise<void> => {
   })
     .use(
       cors({
+        allowedHeaders: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         origin: '*',
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-        credentials: true,
       }),
     )
     .use(
@@ -89,7 +88,7 @@ const setupServer = async (): Promise<void> => {
       if (code === 'VALIDATION') {
         const msg =
           error instanceof Error
-            ? isJsonStr(error.message)
+            ? isJSONStr(error.message)
               ? ((JSON5.parse(error.message) as { summary?: string }).summary ?? '请求参数校验失败')
               : error.message
             : '请求参数校验失败';

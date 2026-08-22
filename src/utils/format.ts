@@ -2,17 +2,17 @@ import { file } from 'bun';
 import { fileTypeFromBuffer } from 'file-type';
 
 import type { ImageInput } from '@/types/shared';
-import { isBufferedFile, isHttp, isImageMime, isWebFile } from './validate';
+import { isBufferFile, isHttp, isImageMime, isFile } from './validate';
 
 export const toImageBase64 = async (data: ImageInput): Promise<string> => {
   // Buffered upload file
-  if (isBufferedFile(data)) {
+  if (isBufferFile(data)) {
     if (!isImageMime(data.mimetype)) throw new Error('上传文件不是图片');
     return `data:${data.mimetype};base64,${data.buffer.toString('base64')}`;
   }
 
   // FormData File
-  if (isWebFile(data)) {
+  if (isFile(data)) {
     if (!isImageMime(data.type)) throw new Error('上传文件不是图片');
     const buffer = await data.arrayBuffer();
     return `data:${data.type};base64,${Buffer.from(buffer).toString('base64')}`;
@@ -42,7 +42,7 @@ export const toImageBase64 = async (data: ImageInput): Promise<string> => {
 
     // Local
     try {
-      const localFile = file(data as string);
+      const localFile = file(data);
       if (await localFile.exists()) {
         const buffer = await localFile.arrayBuffer();
         const mime = localFile.type;
@@ -72,26 +72,69 @@ export const base64ToMediaType = (base64: string): string => {
 };
 
 export const toMath = (data: string): string => {
-  // prettier-ignore
   const map: Record<string, string> = {
     // 数字
-    '零': '0', '〇': '0',
-    '一': '1', '壹': '1', '①': '1',
-    '二': '2', '贰': '2', '②': '2',
-    '三': '3', '叁': '3', '③': '3',
-    '四': '4', '肆': '4', '④': '4',
-    '五': '5', '伍': '5', '⑤': '5',
-    '六': '6', '陆': '6', '⑥': '6',
-    '七': '7', '柒': '7', '⑦': '7',
-    '八': '8', '捌': '8', '⑧': '8',
-    '九': '9', '玖': '9', '⑨': '9',
+    零: '0',
+    〇: '0',
+    一: '1',
+    壹: '1',
+    '①': '1',
+    二: '2',
+    贰: '2',
+    '②': '2',
+    三: '3',
+    叁: '3',
+    '③': '3',
+    四: '4',
+    肆: '4',
+    '④': '4',
+    五: '5',
+    伍: '5',
+    '⑤': '5',
+    六: '6',
+    陆: '6',
+    '⑥': '6',
+    七: '7',
+    柒: '7',
+    '⑦': '7',
+    八: '8',
+    捌: '8',
+    '⑧': '8',
+    九: '9',
+    玖: '9',
+    '⑨': '9',
 
     // 运算符
-    '加': '+', '﹢': '+', '⁺': '+', '₊': '+',
-    '减': '-', '–': '-', '—': '-', '−': '-', '﹣': '-', '⁻': '-', '₋': '-', '_': '-', 'ˍ':'-', '‾': '-',
-    '乘': '*', '✕': '*', '✖': '*', '×': '*', 'Ⅹ': '*', 'ⅹ': '*', 'x': '*', 'X': '*', 
-    '除': '/', '÷': '/', '⁄': '/', '∕': '/',
-    '等': '=', '＝': '=', '﹦': '=', '≈': '=',
+    加: '+',
+    '﹢': '+',
+    '⁺': '+',
+    '₊': '+',
+    减: '-',
+    '–': '-',
+    '—': '-',
+    '−': '-',
+    '﹣': '-',
+    '⁻': '-',
+    '₋': '-',
+    _: '-',
+    ˍ: '-',
+    '‾': '-',
+    乘: '*',
+    '✕': '*',
+    '✖': '*',
+    '×': '*',
+    Ⅹ: '*',
+    ⅹ: '*',
+    x: '*',
+    X: '*',
+    除: '/',
+    '÷': '/',
+    '⁄': '/',
+    '∕': '/',
+    等: '=',
+    '＝': '=',
+    '﹦': '=',
+    '≈': '=',
 
     // 其他
     // '（': '(', '）': ')'
@@ -102,7 +145,6 @@ export const toMath = (data: string): string => {
     .normalize('NFKC')
 
     .replace(/./g, (ch) => map[ch] ?? ch) // OCR 噪声
-
     .replace(/=+$/, '')
     .split('=')[0] // 截断等号内容
     .replace(/[^\d+\-*/.=]/g, ''); // 过滤非相关字符

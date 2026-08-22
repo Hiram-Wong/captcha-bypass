@@ -1,6 +1,6 @@
 import { config } from '@/config';
 
-import { isJson } from './validate';
+import { isJSONValue } from './validate';
 
 type LogLevel = 'silly' | 'debug' | 'info' | 'warn' | 'error' | 'none';
 type LogLevelExcludeNone = Exclude<LogLevel, 'none'>;
@@ -65,7 +65,7 @@ class Logger {
       return arg.stack || arg.message;
     }
 
-    if (isJson(arg)) {
+    if (isJSONValue(arg)) {
       try {
         return JSON.stringify(arg, null, 2);
       } catch {

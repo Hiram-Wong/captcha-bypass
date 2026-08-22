@@ -3,7 +3,7 @@ import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 
 import { log } from '@/utils/logger';
 import { isPackaged } from '@/utils/systemInfo';
-import { isHttp } from '@/utils/validate';
+import { isHttp, isJSONArray } from '@/utils/validate';
 
 type LLMSupportProvider = 'openai';
 type LLMProvider = (modelId: string) => LanguageModel;
@@ -23,7 +23,7 @@ export class AiCaptchaService {
   private provider: LLMProvider | null = null;
 
   private validLLMOptions(messages: ModelMessage[], options: LLMOptions): void {
-    if (!Array.isArray(messages) || !messages.length) {
+    if (!isJSONArray(messages) || !messages.length) {
       throw new Error('Messages invalid');
     }
 
