@@ -1,8 +1,10 @@
 ## 1.1.1
 
 - 修复: 请求日志中间件部分情况下解析数据报错(扫描器)
+- 优化: ocr text 提取去除空字符
 - 变动: ocr pp 模型调整为 [ppv6 模型](https://www.modelscope.cn/models/RapidAI/RapidOCR/tree/master/onnx/PP-OCRv6/rec)
 - 变动: 格式化配置项
+- 变动: 包管理器调整为 bun 1.4.0
 
 ## 1.1.0
 

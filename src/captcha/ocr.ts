@@ -73,7 +73,10 @@ class OcrAiCaptchaService extends AiCaptchaService {
     const text = await this.chatText(messages, options);
     logger.debug(`raw ai completion: ${text}`);
 
-    return { code: text };
+    const result = text.replace(/\s/g, '');
+    logger.debug(`trim ai completion: ${result}`);
+
+    return { code: result };
   }
 
   public async math(bgBase64: string, ranges?: Set<string>): Promise<{ formula: string; result: number }> {
@@ -237,7 +240,10 @@ class OcrOrtCaptchaService extends BaseOrtservice {
     const text = typeof ctcDecode === 'string' ? ctcDecode : ctcDecode[0];
     logger.debug(`raw ctc decode: ${text}`);
 
-    return { code: text };
+    const result = text.replace(/\s/g, '');
+    logger.debug(`trim ctc decode: ${result}`);
+
+    return { code: result };
   }
 
   public async math(bgBase64: string, ranges?: Set<string>): Promise<MathResult> {
