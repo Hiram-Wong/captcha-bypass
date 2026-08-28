@@ -1,11 +1,6 @@
-case "$(uname -a)" in
-  *MINGW64*) exit 0 ;;
-esac
-
+#!/bin/sh
+[[ "$(uname -a)" = *"MINGW64"* ]] && exit 0
 [ -n "$CI" ] && exit 0
+. "$(dirname "$0")/_/husky.sh"
 
-if [ "$OS" = "Windows_NT" ]; then
-  exec < /dev/tty && bunx.cmd git-cz --hook || true
-else
-  exec < /dev/tty && bunx git-cz --hook || true
-fi
+exec < /dev/tty && bunx git-cz --hook || true

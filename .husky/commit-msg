@@ -1,5 +1,4 @@
-if [ "$OS" = "Windows_NT" ]; then
-  bunx.cmd --no-install commitlint -e $GIT_PARAMS
-else
-  bunx --no-install commitlint -e $GIT_PARAMS
-fi
+#!/bin/sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+bunx --no-install commitlint --edit "$1"
