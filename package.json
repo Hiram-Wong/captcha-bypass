@@ -41,11 +41,11 @@
     "convert:charset": "bun run ./scripts/convert-charset.js"
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.36",
+    "@ai-sdk/openai-compatible": "^3.0.37",
     "@elysia/cors": "^1.4.2",
     "@elysia/openapi": "^1.4.15",
     "@techstark/opencv-js": "^5.0.0-release.1",
-    "ai": "^7.0.78",
+    "ai": "^7.0.79",
     "commander": "^15.0.0",
     "dateformat": "^5.0.3",
     "dotenv": "^17.4.2",
