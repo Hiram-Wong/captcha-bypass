@@ -1,0 +1,28 @@
+{
+  "name": "@captcha-bypass/core",
+  "version": "1.1.2",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config.ts",
+    "./health": "./src/health/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.96",
+    "@ai-sdk/google": "^4.0.111",
+    "@ai-sdk/openai": "^4.0.108",
+    "@ai-sdk/openai-compatible": "^3.0.84",
+    "@techstark/opencv-js": "^5.0.0-release.1",
+    "ai": "^7.0.162",
+    "dotenv": "^18.0.9",
+    "file-type": "^22.3.0",
+    "jimp": "^1.6.1",
+    "json5": "2.2.3",
+    "ollama-ai-provider-v2": "4.1.0",
+    "onnxruntime-web": "^1.31.1",
+    "zod": "^4.6.7"
+  }
+}

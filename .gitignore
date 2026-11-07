@@ -36,6 +36,7 @@ node_modules
 !.vscode/settings.json
 .zed/*
 .bitfun/*
+.workbuddy/*
 
 # Husky
 !.husky/_/*

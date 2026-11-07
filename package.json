@@ -1,6 +1,6 @@
 {
   "name": "captcha-bypass",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "description": "Captcha bypass service.",
   "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
@@ -9,12 +9,11 @@
     "name": "Hiram-Wong",
     "email": "admin@catni.cn"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "type": "module",
-  "main": "dist/cli.js",
-  "exports": {
-    "./server": "./dist/server.js",
-    "./cli": "./dist/cli.js"
-  },
+  "main": "src/index.ts",
   "scripts": {
     "deps:check": "ncu",
     "deps:update": "ncu -u && bun install",
@@ -25,49 +24,46 @@
     "typecheck": "tsc --noEmit",
     "check": "bun lint:check && bun format:check && bun typecheck",
     "prepare": "husky",
-    "dev": "bun --watch src/server.ts",
-    "cli": "bun src/cli.ts",
-    "build": "bun scripts/build.js",
-    "build:win": "bun scripts/build.js --platform win32",
-    "build:win:x64": "bun scripts/build.js --platform win32 --arch x64",
-    "build:win:arm64": "bun scripts/build.js --platform win32 --arch arm64",
-    "build:mac": "bun scripts/build.js --platform darwin",
-    "build:mac:x64": "bun scripts/build.js --platform darwin --arch x64",
-    "build:mac:arm64": "bun scripts/build.js --platform darwin --arch arm64",
-    "build:linux": "bun scripts/build.js --platform linux",
-    "build:linux:x64": "bun scripts/build.js --platform linux --arch x64",
-    "build:linux:arm64": "bun scripts/build.js --platform linux --arch arm64",
-    "generate:token": "bun run ./scripts/generate-token.js",
-    "convert:charset": "bun run ./scripts/convert-charset.js"
+    "server": "bun --watch src/index.ts server",
+    "cli": "bun --watch src/index.ts cli",
+    "build:mcpb": "bun scripts/bundle-mcpb.ts",
+    "build": "bun scripts/bundle-binary.ts",
+    "build:win": "bun scripts/bundle-binary.ts --platform win32",
+    "build:win:x64": "bun scripts/bundle-binary.ts --platform win32 --arch x64",
+    "build:win:arm64": "bun scripts/bundle-binary.ts --platform win32 --arch arm64",
+    "build:mac": "bun scripts/bundle-binary.ts --platform darwin",
+    "build:mac:x64": "bun scripts/bundle-binary.ts --platform darwin --arch x64",
+    "build:mac:arm64": "bun scripts/bundle-binary.ts --platform darwin --arch arm64",
+    "build:linux": "bun scripts/bundle-binary.ts --platform linux",
+    "build:linux:x64": "bun scripts/bundle-binary.ts --platform linux --arch x64",
+    "build:linux:arm64": "bun scripts/bundle-binary.ts --platform linux --arch arm64",
+    "build:android": "bun scripts/bundle-binary.ts --platform android",
+    "build:android:x64": "bun scripts/bundle-binary.ts --platform android --arch x64",
+    "build:android:arm64": "bun scripts/bundle-binary.ts --platform android --arch arm64",
+    "convert:charset": "bun run ./scripts/convert-charset.ts",
+    "sync:version": "bun run ./scripts/sync-version.ts"
   },
   "dependencies": {
-    "@ai-sdk/openai-compatible": "^3.0.37",
-    "@elysia/cors": "^1.4.2",
-    "@elysia/openapi": "^1.4.15",
-    "@techstark/opencv-js": "^5.0.0-release.1",
-    "ai": "^7.0.79",
-    "commander": "^15.0.0",
-    "dateformat": "^5.0.3",
-    "dotenv": "^17.4.2",
-    "elysia": "^1.4.29",
-    "jimp": "^1.6.1",
-    "nanoid": "^6.0.1",
-    "onnxruntime-web": "^1.29.0",
-    "rotating-file-stream": "^3.2.10"
+    "@captcha-bypass/cli": "workspace:*",
+    "@captcha-bypass/core": "workspace:*",
+    "@captcha-bypass/server": "workspace:*"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.2.2",
-    "@commitlint/config-conventional": "^21.2.2",
-    "@types/bun": "^1.4.0",
+    "@anthropic-ai/mcpb": "^2.1.2",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@types/bun": "^1.4.4",
     "@types/dateformat": "^5.0.3",
+    "@types/node": "^26.6.6",
+    "commander": "^15.0.0",
     "commitizen": "^4.3.2",
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.3.0",
-    "npm-check-updates": "^23.1.0",
-    "oxfmt": "^0.65.0",
-    "oxlint": "^1.80.0",
-    "oxlint-tsgolint": "^7.0.2001",
+    "lint-staged": "^17.6.0",
+    "npm-check-updates": "^23.1.1",
+    "oxfmt": "^0.76.0",
+    "oxlint": "^1.91.0",
+    "oxlint-tsgolint": "^7.0.2005",
     "typescript": "~5.8.3"
   },
   "lint-staged": {
@@ -84,5 +80,5 @@
       "path": "./node_modules/cz-conventional-changelog"
     }
   },
-  "packageManager": "bun@1.4.0"
+  "packageManager": "bun@1.4.4"
 }

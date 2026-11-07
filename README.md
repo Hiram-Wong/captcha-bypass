@@ -23,22 +23,27 @@
 
 </div>
 
-## 📌 介绍
+## 介绍
 
-基于 `onnxruntime-wasm` 实现跨平台 ONNX 模型推理，通过 Bun 编译为独立二进制。提供 **CLI** 与 **HTTP Server** 两种运行模式。
+**Captcha Bypass** 是一个跨平台的验证码识别服务，基于 `onnxruntime-web` 完成 ONNX 模型推理，通过 [Bun](https://bun.sh) 编译为独立二进制。支持目标检测、文字识别、旋转验证码、滑块验证码四类能力，提供 **CLI** 与 **HTTP Server** 两种运行方式，并可打包为 **MCP** 包供 AI 客户端调用。
 
-## 📖 使用
+### 核心特性
 
-### 部署
+- **跨平台**：单份二进制，覆盖 Linux / Windows / macOS / Android 四类平台（amd64 + arm64）。
+- **双运行模式**：CLI 模式适合脚本化调用，Server 模式提供 HTTP 接口与 OpenAPI 文档。
+- **可插拔模型**：支持自定义 ONNX 模型，路径与超参均通过环境变量配置。
+- **AI加成**：可选接入大模型（OpenAI / Anthropic / Google / Ollama 等）完成文字与算术验证码识别。
 
-#### 方式一：二进制 + 模型
+## 快速开始
 
-1. 从 [Releases][github-release-link] 下载对应平台的`二进制文件` `models.zip` 模型文件 以及 `public.zip` 静态资源。
-2. 将 `二进制文件(建议重命名)` `models/` `public/` 放在同一目录，结构如下：
+### 方式一：二进制 + 模型
+
+1. 从 [Releases][github-release-link] 下载对应平台的二进制、`models.zip` 模型文件及 `public.zip` 静态资源。
+2. 将二进制（建议重命名）与 `models/`、`public/` 放在同一目录：
 
 ```
 captcha-bypass/
-├── captcha-bypass             # 按实际平台替换
+├── captcha-bypass                 # 按实际平台替换，如 captcha-bypass-mac-arm64
 ├── models/
 │   ├── detect.onnx
 │   ├── ocr_dddd.onnx
@@ -46,335 +51,170 @@ captcha-bypass/
 │   ├── ocr_pp.onnx
 │   ├── ocr_pp.json
 │   └── rotate.onnx
-└── public/                    # 可选，静态资源
+└── public/                        # 可选，静态资源
     ├── favicon.ico
     └── robots.txt
 ```
 
-3. 按需设置环境变量后启动：
+3. 启动：
 
 ```bash
-# Cli 模式, 如需只需结果(指定 LOG_LEVEL:none)
-./captcha-bypass-cli ocr --type text --bg https://example.com/captcha.png # Mac/Linux
-.\captcha-bypass-cli.exe ocr --type text --bg https://example.com/captcha.png # Windows
+# CLI 模式（仅需结果时指定 LOG_LEVEL=none）
+./captcha-bypass cli captcha ocr --type text --bg https://example.com/captcha.png   # Mac / Linux
+.\captcha-bypass.exe cli captcha ocr --type text --bg https://example.com/captcha.png # Windows
 
 # Server 模式
-./captcha-bypass-server # Mac/Linux
-.\captcha-bypass-server.exe # Windows
+./captcha-bypass server          # Mac / Linux
+.\captcha-bypass.exe server      # Windows
 ```
 
-> 模型文件通过环境变量指定；不设置时默认加载二进制同级 `models/` 目录下的对应文件。
+> 模型文件通过环境变量指定；未设置时默认加载二进制同级 `models/` 目录下的对应文件。
 
-#### 方式二：Docker
+### 方式二：Docker
 
 ```bash
 # 拉取镜像
 docker pull ghcr.io/hiram-wong/captcha-bypass:latest
 
-# Cli 模式
-docker run --rm ghcr.io/hiram-wong/captcha-bypass:latest ./captcha-bypass-cli ocr --type text --bg https://example.com/captcha.png
+# CLI 模式
+docker run --rm ghcr.io/hiram-wong/captcha-bypass:latest ./captcha-bypass cli captcha ocr --type text --bg https://example.com/captcha.png
 
 # Server 模式
 docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 ```
 
-> 模型已内置于镜像，无需额外挂载。通过 `-e` 传环境变量覆盖配置。
+> 镜像内置模型，开箱即用；通过 `-e` 传入环境变量覆盖配置。如需自定义模型或日志落盘，参考仓库内 `docker-compose.yml`。
 
-### 环境变量
+## 使用
 
-| 配置               | 类型                                                                    | 默认值                | 说明                                                                               |
-| :----------------- | :---------------------------------------------------------------------- | :-------------------- | :--------------------------------------------------------------------------------- |
-| NODE_ENV           | `"development"` \| `"production"`                                       | development           | 运行环境                                                                           |
-| LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` \| `"none"` | none                  | 日志级别<br>从低到高：silly < debug < info < warn < error<br>`none` 表示不输出日志 |
-| PORT               | `number`                                                                | 7788                  | 服务端口（仅 server 模式）                                                         |
-| OPENAPI_ENABLE     | `boolean`                                                               | false                 | 是否启用 OpenAPI 文档（仅 server 模式）                                            |
-| AUTH_TYPE          | `0` \| `1` \| `2`                                                       | 0                     | 认证类型<br>0: 不启用；1: 固定值；2: 时间戳随机签名(3分钟)                         |
-| AUTH_KEY           | `string`                                                                | 空字符串              | 认证密钥<br>AUTH_TYPE=1/2 时使用                                                   |
-| DETECT_MODEL_PATH  | `string`                                                                | `models/detect.onnx`  | Detect 模型文件路径                                                                |
-| DETECT_SHAPE       | `number[]`                                                              | `[3,416,416]`         | 模型输入尺寸 [C,H,W]                                                               |
-| DETECT_MEAN        | `number[]`                                                              | `[0,0,0]`             | 均值标准化                                                                         |
-| DETECT_STD         | `number[]`                                                              | `[1,1,1]`             | 标准差标准化                                                                       |
-| OCR_MODEL_PATH     | `string`                                                                | `models/ocr_pp.onnx`  | OCR 模型文件路径                                                                   |
-| OCR_CHARSET_PATH   | `string`                                                                | `models/ocr_pp.json`  | OCR 字符集文件路径                                                                 |
-| OCR_CHARSET_RANGES | `string`                                                                | 空字符串              | OCR 字符集范围过滤<br>如 `"0123456789"`；按字符拆分后过滤识别结果                  |
-| OCR_SHAPE          | `number[]`                                                              | `[3,48,320]`          | 模型输入尺寸 [C,H,W]<br>ppocr: `[3,48,320]`; ddddocr: `[1,64,0]`                   |
-| OCR_MEAN           | `number`                                                                | `0.5`                 | 均值标准化                                                                         |
-| OCR_STD            | `number`                                                                | `0.5`                 | 标准差标准化                                                                       |
-| OCR_CTC_LAYOUT     | `"ntc"` \| `"tnc"`                                                      | `ntc`                 | CTC 布局<br>ppocr: ntc / ddddocr: tnc                                              |
-| ROTATE_MODEL_PATH  | `string`                                                                | `models/rotate.onnx`  | ROTATE 模型文件路径                                                                |
-| ROTATE_SHAPE       | `number[]`                                                              | `[3,224,224]`         | 模型输入尺寸 [C,H,W]                                                               |
-| ROTATE_MEAN        | `number[]`                                                              | `[0.485,0.456,0.406]` | 均值标准化                                                                         |
-| ROTATE_STD         | `number[]`                                                              | `[0.229,0.224,0.225]` | 标准差标准化                                                                       |
-| OPENAI_BASE_URL    | `string`                                                                | 空字符串              | OpenAI API 地址<br>仅支持 `/chat/completions`                                      |
-| OPENAI_API_KEY     | `string`                                                                | 空字符串              | OpenAI API 密钥                                                                    |
-| OPENAI_OCR_MODEL   | `string`                                                                | PaddleOCR-VL-1.6      | OCR 专用模型名称<br>推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR                      |
-| OPENAI_MODEL       | `string`                                                                | gpt-5.5               | 通用模型名称                                                                       |
+### 支持的能力
 
-### 参数说明
+| 能力       | 接口              | 方法 | 模式         | 说明                                   |
+| :--------- | :---------------- | :--- | :----------- | :------------------------------------- |
+| 目标检测   | `/captcha/detect` | POST | CLI / Server | 识别图中目标位置，或匹配目标与背景     |
+| 文字识别   | `/captcha/ocr`    | POST | CLI / Server | 识别文本或算术验证码（支持 AI 兜底）   |
+| 旋转验证码 | `/captcha/rotate` | POST | CLI / Server | 计算旋转角度（单图 / 双圆 / 拼图）     |
+| 滑块验证码 | `/captcha/slide`  | POST | CLI / Server | 计算滑块偏移坐标（匹配 / 对比）        |
+| 健康检查   | `/health`         | GET  | CLI / Server | 存活探测；CLI 下为 `cli health` 子命令 |
+| OpenAPI    | `/docs`           | GET  | Server       | 需启用 `OPENAPI_ENABLE`（默认关闭）    |
 
-| 说明       | 接口              | 方法 | 模式         | 参数                                                                                                     |
-| :--------- | :---------------- | :--- | :----------- | :------------------------------------------------------------------------------------------------------- |
-| 目标检测   | `/captcha/detect` | POST | CLI / Server | type(必传): detect / match<br>bg(必传)<br>thumb(match 必传)                                              |
-| 文本验证码 | `/captcha/ocr`    | POST | CLI / Server | type(必传): text / math<br>bg(必传)<br>action(可选, 默认 onnx): ai / onnx<br>range(可选): 识别字符集范围 |
-| 旋转验证码 | `/captcha/rotate` | POST | CLI / Server | type(必传): single/ nox / tiktok<br>bg(必传)<br>thumb(nox/tiktok 必传)                                   |
-| 滑动验证码 | `/captcha/slide`  | POST | CLI / Server | type(必传): match / comparison<br>thumb(必传)<br>bg(必传)                                                |
-| 健康检查   | `/health`         | GET  | Server       |                                                                                                          |
-| MCP 协议   | `/mcp`            | POST | Server       | Streamable HTTP 传输，body：JSON-RPC 2.0 消息（详见工具列表）                                            |
+### 参数与调用
 
-### 调用说明
+各能力的参数语义、响应格式、图片输入方式与调用示例，统一维护在 [skill 参考文档](./packages/skills/captcha-bypass/references/) 中：
 
-| 模式   | 授权                            | 图片                                                                                             |
-| :----- | :------------------------------ | :----------------------------------------------------------------------------------------------- |
-| Cli    | 无                              | 支持 Base64 / URL / 文件路径                                                                     |
-| Server | `Authorization: Bearer <token>` | Base64/URL 使用 `Content-Type: application/json`<br>文件使用 `Content-Type: multipart/form-data` |
+| 文档                                                                             | 内容                                       |
+| :------------------------------------------------------------------------------- | :----------------------------------------- |
+| [api_reference.md](./packages/skills/captcha-bypass/references/api_reference.md) | 能力定义、参数语义、响应格式、图片输入方式 |
+| [cli.md](./packages/skills/captcha-bypass/references/cli.md)                     | CLI 调用指引与示例                         |
+| [server.md](./packages/skills/captcha-bypass/references/server.md)               | Server 调用指引与示例（含鉴权说明）        |
+
+核心约定：CLI 模式无鉴权，支持 Base64 / URL / 本地文件路径；Server 模式按需启用 `Bearer Token` 鉴权，支持 Base64 / URL / 文件上传。
+
+### MCP 集成
+
+MCP 服务遵循 [Model Context Protocol](https://modelcontextprotocol.io)，以独立打包的 `.mcpb` 包（`captcha-bypass.mcpb`）随版本发布，可在任意支持 MCP 的客户端（如 Claude Desktop、WorkBuddy 等）中安装使用。
+
+#### 安装与配置
+
+从 [Releases][github-release-link] 下载 `captcha-bypass.mcpb`，安装到你的 MCP 客户端后，配置以下参数指向一个已运行的服务：
+
+| 配置项  | 说明                                                  | 默认值           |
+| :------ | :---------------------------------------------------- | :--------------- |
+| baseURL | HTTP 服务地址                                         | `127.0.0.1:7788` |
+| token   | 服务端 `AUTH_KEYS` 中的任一 key（服务启用认证时必填） | 空               |
+| timeout | 单次识别请求超时（毫秒）                              | `120000`         |
+
+#### 暴露的工具
+
+| 工具名           | 说明                                     | 对应接口          |
+| :--------------- | :--------------------------------------- | :---------------- |
+| `captcha_ocr`    | 文字 / 算术验证码识别（onnx 或 ai 引擎） | `/captcha/ocr`    |
+| `captcha_rotate` | 旋转验证码角度检测（single/nox/tiktok）  | `/captcha/rotate` |
+| `captcha_slide`  | 滑块验证码位置匹配                       | `/captcha/slide`  |
+| `captcha_detect` | 目标检测（YOLO 检测或匈牙利匹配）        | `/captcha/detect` |
+| `health`         | 检查远程服务健康状态                     | `/health`         |
+
+### Skill 使用
+
+项目同时提供一个 **Skill**，随版本发布，供 AI Agent（如 Claude Code、WorkBuddy 等）在对话中直接调用验证码识别能力。
+
+Skill 通过环境变量约定运行方式（`CAPTCHA_TYPE`：cli / server 模式、`CAPTCHA_BIN`：二进制路径或服务 URL、`CAPTCHA_KEY`：鉴权 key），首次使用时由 Agent 引导初始化，详见 [SKILL.md](./packages/skills/captcha-bypass/SKILL.md)。
+
+## 配置
+
+所有配置均通过环境变量设置，参考 `.env.example` 。
+
+| 配置               | 类型                                                                           | 默认值                | 说明                                                                                           |
+| :----------------- | :----------------------------------------------------------------------------- | :-------------------- | :--------------------------------------------------------------------------------------------- |
+| NODE_ENV           | `"development"` \| `"production"`                                              | production            | 运行环境                                                                                       |
+| LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` \| `"none"`        | none                  | 日志级别（从低到高），`none` 表示不输出日志                                                    |
+| PORT               | `number`                                                                       | 7788                  | 服务端口（仅 server 模式）                                                                     |
+| OPENAPI_ENABLE     | `boolean`                                                                      | false                 | 是否启用 OpenAPI 文档（仅 server 模式）                                                        |
+| AUTH_KEYS          | `string[]`（JSON 数组）                                                        | `[]`                  | 认证密钥列表；空数组不启用认证；启用后请求需携带 `Authorization: Bearer <key>`（任一匹配即可） |
+| DETECT_MODEL_PATH  | `string`                                                                       | `models/detect.onnx`  | Detect 模型路径                                                                                |
+| DETECT_SHAPE       | `number[]`                                                                     | `[3,416,416]`         | 模型输入尺寸 `[C,H,W]`                                                                         |
+| DETECT_MEAN        | `number[]`                                                                     | `[0,0,0]`             | 均值标准化                                                                                     |
+| DETECT_STD         | `number[]`                                                                     | `[1,1,1]`             | 标准差标准化                                                                                   |
+| OCR_MODEL_PATH     | `string`                                                                       | `models/ocr_pp.onnx`  | OCR 模型路径（ppocr / ddddocr）                                                                |
+| OCR_CHARSET_PATH   | `string`                                                                       | `models/ocr_pp.json`  | OCR 字符集路径                                                                                 |
+| OCR_CHARSET_RANGES | `string`                                                                       | 空字符串              | 字符集范围过滤，如 `"0123456789"`                                                              |
+| OCR_SHAPE          | `number[]`                                                                     | `[3,48,320]`          | 模型输入尺寸 `[C,H,W]`（ppocr `[3,48,320]` / ddddocr `[1,64,0]`）                              |
+| OCR_MEAN           | `number`                                                                       | `0.5`                 | 均值标准化                                                                                     |
+| OCR_STD            | `number`                                                                       | `0.5`                 | 标准差标准化                                                                                   |
+| OCR_CTC_LAYOUT     | `"ntc"` \| `"tnc"`                                                             | `ntc`                 | CTC 布局（ppocr ntc / ddddocr tnc）                                                            |
+| ROTATE_MODEL_PATH  | `string`                                                                       | `models/rotate.onnx`  | ROTATE 模型路径                                                                                |
+| ROTATE_SHAPE       | `number[]`                                                                     | `[3,224,224]`         | 模型输入尺寸 `[C,H,W]`                                                                         |
+| ROTATE_MEAN        | `number[]`                                                                     | `[0.485,0.456,0.406]` | 均值标准化                                                                                     |
+| ROTATE_STD         | `number[]`                                                                     | `[0.229,0.224,0.225]` | 标准差标准化                                                                                   |
+| AI_TYPE            | `"anthropic"` \| `"google"` \| `"ollama"` \| `"openai"` \| `"openai-response"` | openai                | AI 服务类型                                                                                    |
+| AI_BASE_URL        | `string`                                                                       | 空字符串              | AI API 地址                                                                                    |
+| AI_API_KEY         | `string`                                                                       | 空字符串              | AI API 密钥                                                                                    |
+| AI_OCR_MODEL       | `string`                                                                       | PaddleOCR-VL-1.6      | OCR 专用模型名（推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR）                                    |
+| AI_MODEL           | `string`                                                                       | gpt-5.5               | 通用模型名                                                                                     |
+
+## 常见问题
 
 <details>
-<summary>展开查看常见问题</summary>
+<summary>展开查看</summary>
 
 #### 识别不准确？
 
-- 使用onnx部分由模型决定的，请自行使用 [dddd_trainer](https://github.com/sml2h3/dddd_trainer) 工具训练特定场景专属数据模型。
-- 使用opencv部分为非通用场景, 特定场景需请自行完成算法匹配。
+- 使用 onnx 部分由模型决定，可自行使用 [dddd_trainer](https://github.com/sml2h3/dddd_trainer) 训练特定场景专属模型。
+- 使用 opencv 部分为非通用场景，特定场景需自行完成算法匹配。
 
 #### 算术识别不准确？
 
-- 算术识别也与模型挂钩。
-- 只支持整数四则运算(加减乘除), 不支持其他运算(取余开方取余)等计算。
-- onnx: 对`+`和`*`错误率较高, 建议根据给出的公式手动替换符号再次计算。
-- ai: 部分模型对提示词理解能力较差, 字符集范围不生效
+- 算术识别同样与模型挂钩。
+- 仅支持整数四则运算（加减乘除），不支持取余、开方等其他运算。
+- onnx：对 `+` 与 `*` 错误率较高，建议按给出的公式手动核对符号后再次计算。
+- ai：部分模型对提示词理解能力较弱，字符集范围可能不生效。
 
 </details>
 
-<details>
-<summary>展开查看命令示例</summary>
+## 开发
 
-#### 帮助 & 版本
-
-```bash
-./captcha-bypass-cli -h
-./captcha-bypass-cli -V
-```
-
-#### 目标检测
+> 需先安装 [Bun](https://bun.com/docs/installation)
 
 ```bash
-./captcha-bypass-cli detect --type detect --bg "https://camo.githubusercontent.com/3d8846970916d08d38ef3b02ff5ab0782f51ea78e1bcff8b14b9e2bfad5b9496/68747470733a2f2f667265652e70696375692e636e2f667265652f323032352f30372f33302f363838393732643639643363312e6a7067"
-# {"status":0,"data":[{"target":"data:image/png;base64,...","coordinate":{"x1":246,"y1":47,"x2":287,"y2":87}}, ...],"msg":"success"}
-```
-
-```bash
-./captcha-bypass-cli detect --type match --bg "https://camo.githubusercontent.com/3d8846970916d08d38ef3b02ff5ab0782f51ea78e1bcff8b14b9e2bfad5b9496/68747470733a2f2f667265652e70696375692e636e2f667265652f323032352f30372f33302f363838393732643639643363312e6a7067" --thumb "https://camo.githubusercontent.com/bab074d6e744ba7e31c776d24aacab428959330ab424db797155ea72b15dfd56/68747470733a2f2f667265652e70696375692e636e2f667265652f323032352f30372f33302f363838393735633932353134632e6a7067"
-# {"status":0,"data":[{"target":"data:image/png;base64,...","coordinate":{"x1":14,"y1":101,"x2":99,"y2":217}}, ...],"msg":"success"}
-```
-
-#### 文字识别
-
-```bash
-./captcha-bypass-cli ocr --type text --action onnx --bg "https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png" --range 0123456789
-# {"status":0,"data":{"code":"0413"},"msg":"success"}
-```
-
-```bash
-./captcha-bypass-cli ocr --type math --action ai --bg "data:image/jpeg;base64,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"
-# {"status":0,"data":{"formula":"41*8","result":328},"msg":"success"}
-```
-
-#### 旋转验证码
-
-```bash
-./captcha-bypass-cli rotate --type single --bg "https://github.com/chencchen/RotateCaptchaBreak/blob/master/data/baiduCaptcha/1615096444.jpg?raw=true"
-# {"status":0,"data":{"cw":253,"ccw":107},"msg":"success"}
-```
-
-```bash
-./captcha-bypass-cli rotate --type nox --thumb "https://aisearch.cdn.bcebos.com/fileManager/Kd4NhrVAnd-Xb07XyhFDNyL8o8W6ok-5XB3BKJCkBzA/17812845752526QDSku.png" --bg "https://aisearch.cdn.bcebos.com/fileManager/Kd4NhrVAnd-Xb07XyhFDNyL8o8W6ok-5XB3BKJCkBzA/1781284569883njSOO4.png"
-# {"status":0,"data":{"cw":85,"ccw":275},"msg":"success"}
-```
-
-```bash
-./captcha-bypass-cli rotate --type tiktok --thumb "https://github.com/ycq0125/rotate_captcha/blob/main/imgs/inner_5.png?raw=true" --bg "https://github.com/ycq0125/rotate_captcha/blob/main/imgs/outer_5.png?raw=true"
-# {"status":0,"data":{"cw":325,"ccw":35},"msg":"success"}
-```
-
-#### 滑块验证码
-
-```bash
-./captcha-bypass-cli slide --type match --thumb "https://camo.githubusercontent.com/0db95c4247a43b41d5f3e3c9068856df40eaf6339fcfb86988a122b49939a4af/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f612e706e67" --bg "https://camo.githubusercontent.com/9fb4d767ad341b1d594c30dbe284aaddc131204ae0cc9f3b82968a88ccd67b79/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f622e706e67"
-# {"status":0,"data":{"x":214,"y":0},"msg":"success"}
-```
-
-```bash
-./captcha-bypass-cli slide --type compare --thumb "https://camo.githubusercontent.com/53c5f15724fe306bca6b903cb5f2b74990cb6a620690f4b19ad26ff464706dbc/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f62672e6a7067" --bg "https://camo.githubusercontent.com/ac0c1a2501a0aaa3d58e561aefea4a410f59849fa16afd652d7d06c7e0ad4e81/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f66756c6c706167652e6a7067"
-# {"status":0,"data":{"x":142,"y":66},"msg":"success"}
-```
-
-</details>
-
-<details>
-<summary>展开查看请求示例</summary>
-
-#### 目标检测
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/detect' -H 'Content-Type: multipart/form-data' \
--F 'type=detect' \
--F 'bg=https://camo.githubusercontent.com/3d8846970916d08d38ef3b02ff5ab0782f51ea78e1bcff8b14b9e2bfad5b9496/68747470733a2f2f667265652e70696375692e636e2f667265652f323032352f30372f33302f363838393732643639643363312e6a7067'
-# {"status":0,"data":[{"target":"data:image/png;base64,...","coordinate":{"x1":246,"y1":47,"x2":287,"y2":87}}, ...],"msg":"success"}
-```
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/detect' -H 'Content-Type: multipart/form-data' \
--F 'type=match' \
--F 'bg=https://camo.githubusercontent.com/3d8846970916d08d38ef3b02ff5ab0782f51ea78e1bcff8b14b9e2bfad5b9496/68747470733a2f2f667265652e70696375692e636e2f667265652f323032352f30372f33302f363838393732643639643363312e6a7067' \
--F 'thumb=https://camo.githubusercontent.com/bab074d6e744ba7e31c776d24aacab428959330ab424db797155ea72b15dfd56/68747470733a2f2f667265652e70696375692e636e2f667265652f323032352f30372f33302f363838393735633932353134632e6a7067'
-# {"status":0,"data":[{"target":"data:image/png;base64,...","coordinate":{"x1":14,"y1":101,"x2":99,"y2":217}}, ...],"msg":"success"}
-```
-
-#### 文字识别
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/ocr' -H 'Content-Type: application/json' -d '{
-  "type": "text",
-  "action": "onnx",
-  "bg": "https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png",
-  "range": "0123456789"
-}'
-# {"status":0,"data":{"code":"0413"},"msg":"success"}
-```
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/ocr' -H 'Content-Type: application/json' -d '{
-  "type": "math",
-  "action": "ai",
-  "bg": "data:image/jpeg;base64,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"
-}'
-# {"status":0,"data":{"formula":"41*8","result":328},"msg":"success"}
-```
-
-#### 旋转验证码
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/rotate' -H 'Content-Type: application/json' -d '{
-  "type": "single",
-  "bg": "https://github.com/chencchen/RotateCaptchaBreak/blob/master/data/baiduCaptcha/1615096444.jpg?raw=true"
-}'
-# {"status":0,"data":{"cw":253,"ccw":107},"msg":"success"}
-```
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/rotate' -H 'Content-Type: application/json' -d '{
-  "type": "nox",
-  "thumb": "https://aisearch.cdn.bcebos.com/fileManager/Kd4NhrVAnd-Xb07XyhFDNyL8o8W6ok-5XB3BKJCkBzA/17812845752526QDSku.png",
-  "bg": "https://aisearch.cdn.bcebos.com/fileManager/Kd4NhrVAnd-Xb07XyhFDNyL8o8W6ok-5XB3BKJCkBzA/1781284569883njSOO4.png"
-}'
-# {"status":0,"data":{"cw":85,"ccw":275},"msg":"success"}
-```
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/rotate' -H 'Content-Type: application/json' -d '{
-  "type": "tiktok",
-  "thumb": "https://github.com/ycq0125/rotate_captcha/blob/main/imgs/inner_5.png?raw=true",
-  "bg": "https://github.com/ycq0125/rotate_captcha/blob/main/imgs/outer_5.png?raw=true"
-}'
-# {"status":0,"data":{"cw":325,"ccw":35},"msg":"success"}
-```
-
-#### 滑块验证码
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/slide' -H 'Content-Type: application/json' -d '{
-  "type": "match",
-  "thumb": "https://camo.githubusercontent.com/0db95c4247a43b41d5f3e3c9068856df40eaf6339fcfb86988a122b49939a4af/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f612e706e67",
-  "bg": "https://camo.githubusercontent.com/9fb4d767ad341b1d594c30dbe284aaddc131204ae0cc9f3b82968a88ccd67b79/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f622e706e67"
-}'
-# {"status":0,"data":{"x":214,"y":0},"msg":"success"}
-```
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/captcha/slide' -H 'Content-Type: application/json' -d '{
-  "type": "compare",
-  "thumb": "https://camo.githubusercontent.com/53c5f15724fe306bca6b903cb5f2b74990cb6a620690f4b19ad26ff464706dbc/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f62672e6a7067",
-  "bg": "https://camo.githubusercontent.com/ac0c1a2501a0aaa3d58e561aefea4a410f59849fa16afd652d7d06c7e0ad4e81/68747470733a2f2f63646e2e77656e616e7a68652e636f6d2f696d672f66756c6c706167652e6a7067"
-}'
-# {"status":0,"data":{"x":142,"y":66},"msg":"success"}
-```
-
-</details>
-
-<details>
-<summary>展开查看MCP调用</summary>
-
-MCP 端点遵循 [Model Context Protocol](https://modelcontextprotocol.io) 协议，使用 Streamable HTTP 传输 JSON-RPC 2.0 消息。所有请求发送到 `POST /mcp`，直接返回 JSON-RPC 响应。
-
-#### 1. 初始化
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/mcp' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "initialize",
-    "params": {
-      "protocolVersion": "2024-11-05",
-      "capabilities": {},
-      "clientInfo": { "name": "client", "version": "1.0" }
-    }
-  }'
-```
-
-#### 2. 获取工具列表
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/mcp' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 2,
-    "method": "tools/list"
-  }'
-```
-
-#### 3. 调用 OCR 识别
-
-```bash
-curl -X POST 'http://127.0.0.1:7788/mcp' \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 3,
-    "method": "tools/call",
-    "params": {
-      "name": "ocr",
-      "arguments": { "type": "text", "bg": "https://images2018.cnblogs.com/blog/1047463/201804/1047463-20180406163706898-1017943434.png", "action": "onnx", "range":"0123456789" }
-    }
-  }'
-```
-
-</details>
-
-## 🛠️ 开发
-
-> 安装[bun](https://bun.com/docs/installation)
-
-```bash
-cp .env.example .env                 # 复制环境变量配置文件
+cp .env.example .env                 # 复制环境变量配置
 bun install                          # 安装依赖
-bun run dev/cli                      # 开发模式, server模式/cli模式
-bun run build:{platform}:{arch}      # 构建二进制, 如: bun run build:darwin:arm64
+bun run server                       # 开发模式（server）
+bun run cli                          # 开发模式（cli）
+bun run build:{win|mac|linux|android}:{arch}   # 构建二进制，如 bun run build:mac:arm64
+bun run build:mcpb                   # 构建 MCP 包（.mcpb）
 ```
 
-## 📄 许可
+## 许可
 
-PP_OCR 模型版权归[PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR)所有，DDDD_OCR 模型版权归[ddddocr](https://github.com/sml2h3/ddddocr)所有，其他工程代码版权归本仓库所有者所有, 本项目采用[MIT License](./LICENSE)许可。
+PP_OCR 模型版权归 [PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR) 所有，DDDD_OCR 模型版权归 [ddddocr](https://github.com/sml2h3/ddddocr) 所有，其余工程代码版权归本仓库所有者所有。本项目采用 [MIT License](./LICENSE) 许可。
 
-使用本项目即表示您已阅读并同意以下条款(谁使用, 谁负责)：
+使用本项目即表示您已阅读并同意以下条款（谁使用，谁负责）：
 
-1. 合法使用: 不得将本项目用于任何违法、违规或侵犯他人权益的行为，包括但不限于网络攻击、诈骗、绕过身份验证、未经授权的数据抓取等。
-2. 风险自负: 任何因使用本项目而产生的法律责任、技术风险或经济损失，由使用者自行承担，项目作者不承担任何形式的责任。
-3. 禁止滥用: 不得将本项目用于违法牟利、黑产活动或其他不当商业用途。
+1. **合法使用**：不得将本项目用于任何违法、违规或侵犯他人权益的行为，包括但不限于网络攻击、诈骗、绕过身份验证、未经授权的数据抓取等。
+2. **风险自负**：任何因使用本项目而产生的法律责任、技术风险或经济损失，由使用者自行承担，项目作者不承担任何形式的责任。
+3. **禁止滥用**：不得将本项目用于违法牟利、黑产活动或其他不当商业用途。
 
-如果您发现该项目对您的研究有用，请考虑引用：
+如本项目对您的研究有所帮助，欢迎引用：
 
 ```bibtex
 @misc{captcha-bypass,
@@ -385,15 +225,15 @@ PP_OCR 模型版权归[PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR)�
 }
 ```
 
-## 🙏 鸣谢
+## 鸣谢
 
 - [onnxruntime-web](https://github.com/microsoft/onnxruntime-web) - 模型推理
-- [@techstark/opencv-js](https://github.com/TechStark/opencv-js) - opencv
+- [@techstark/opencv-js](https://github.com/TechStark/opencv-js) - OpenCV
 - [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) - 文字识别模型
-- [ddddocr](https://github.com/sml2h3/ddddocr) - 文字识别模型/对象识别模型/滑块匹配算法
-- [ddddocr(pr 259)](https://github.com/k23223/ddddocr) - 单图矫正模型
-- [JJBJJ](https://github.com/JJBJJ) - 双图Nox算法
-- [来一碗清茶(csdn)](https://blog.csdn.net/u011931957/article/details/147661195) - 双图Tiktok算法
+- [ddddocr](https://github.com/sml2h3/ddddocr) - 文字识别 / 目标检测模型 / 滑块匹配算法
+- [ddddocr (pr 259)](https://github.com/k23223/ddddocr) - 单图矫正模型
+- [JJBJJ](https://github.com/JJBJJ) - 双图 Nox 算法
+- [来一碗清茶 (CSDN)](https://blog.csdn.net/u011931957/article/details/147661195) - 双图 Tiktok 算法
 
 <!-- Links & Images -->
 

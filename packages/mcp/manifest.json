@@ -1,0 +1,86 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/mcpb/main/schemas/mcpb-manifest-v0.3.schema.json",
+  "manifest_version": "0.3",
+  "name": "captcha-bypass",
+  "display_name": "Captcha Bypass",
+  "version": "1.1.2",
+  "description": "Captcha bypass service: OCR / rotate / slide / detect captcha recognition via a remote HTTP service.",
+  "long_description": "MCP server for captcha-bypass. Provides four captcha tools (ocr, rotate, slide, detect), calling a remote captcha-bypass HTTP service (requires the server URL and optional auth params, configured at install time via user_config).",
+  "author": {
+    "name": "Hiram-Wong",
+    "email": "admin@catni.cn",
+    "url": "https://github.com/Hiram-Wong"
+  },
+  "homepage": "https://github.com/Hiram-Wong/captcha-bypass",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hiram-Wong/captcha-bypass"
+  },
+  "license": "MIT",
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "BASE_URL": "https://ocr.catni.cn",
+        "TOKEN": "zyshidashabi",
+        "TIMEOUT": "12000"
+      }
+    }
+  },
+  "user_config": {
+    "baseURL": {
+      "type": "string",
+      "title": "服务地址 (baseURL)",
+      "description": "HTTP 服务地址（默认 127.0.0.1:7788）",
+      "default": "127.0.0.1:7788",
+      "required": false
+    },
+    "token": {
+      "type": "string",
+      "title": "认证令牌 (token)",
+      "description": "服务端 AUTH_KEYS 中的任一 key（服务启用认证时必填）",
+      "default": "",
+      "sensitive": true,
+      "required": false
+    },
+    "timeout": {
+      "type": "number",
+      "title": "请求超时 (ms)",
+      "description": "单次识别请求的超时毫秒数 (默认 120000)",
+      "default": 120000,
+      "required": false
+    }
+  },
+  "tools": [
+    {
+      "name": "captcha_ocr",
+      "description": "Recognize text or math formula from captcha images (onnx or ai engine)."
+    },
+    {
+      "name": "captcha_rotate",
+      "description": "Detect rotation angle of captcha images (single/nox/tiktok)."
+    },
+    {
+      "name": "captcha_slide",
+      "description": "Match slider captcha position by comparing slider image with background image."
+    },
+    {
+      "name": "captcha_detect",
+      "description": "Detect objects in captcha images (YOLO-style detection or Hungarian matching)."
+    },
+    {
+      "name": "health",
+      "description": "Check the remote captcha-bypass service health."
+    }
+  ],
+  "keywords": ["captcha", "ocr", "slider", "rotate", "detect", "onnx"],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=20"
+    }
+  }
+}

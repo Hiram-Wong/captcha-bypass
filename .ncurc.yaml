@@ -1,5 +1,6 @@
 target: latest
 packageManager: bun
+workspaces: true
 reject:
   - typescript
 cooldown: 3d

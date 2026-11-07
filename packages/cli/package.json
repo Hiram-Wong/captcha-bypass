@@ -1,0 +1,14 @@
+{
+  "name": "@captcha-bypass/cli",
+  "version": "1.1.2",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@captcha-bypass/core": "workspace:*",
+    "commander": "^15.0.0"
+  }
+}

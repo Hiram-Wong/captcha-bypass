@@ -3,11 +3,6 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "rootDir": ".",
-    "outDir": "dist",
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,
     "noEmit": true,
@@ -16,6 +11,6 @@
     "strict": true,
     "types": ["bun", "node"]
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "packages/*/src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }
