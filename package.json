@@ -41,7 +41,8 @@
     "build:android:x64": "bun scripts/bundle-binary.ts --platform android --arch x64",
     "build:android:arm64": "bun scripts/bundle-binary.ts --platform android --arch arm64",
     "convert:charset": "bun run ./scripts/convert-charset.ts",
-    "sync:version": "bun run ./scripts/sync-version.ts"
+    "sync:version": "bun run ./scripts/sync-version.ts",
+    "gen:token": "bun run ./scripts/gen-token.ts"
   },
   "dependencies": {
     "@captcha-bypass/cli": "workspace:*",
