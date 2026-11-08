@@ -12,7 +12,7 @@ program.name(APP_NAME).description(APP_DESC).version(APP_VERSION);
 
 program
   .command('server')
-  .description('Captcha bypass server')
+  .description('Captcha bypass Server')
   .action(async () => {
     await startServer();
   });
