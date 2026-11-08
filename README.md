@@ -25,21 +25,21 @@
 
 ## 介绍
 
-**Captcha Bypass** 是一个跨平台的验证码识别服务，基于 `onnxruntime-web` 完成 ONNX 模型推理，通过 [Bun](https://bun.sh) 编译为独立二进制。支持目标检测、文字识别、旋转验证码、滑块验证码四类能力，提供 **CLI** 与 **HTTP Server** 两种运行方式，并可打包为 **MCP** 包供 AI 客户端调用。
+**Captcha Bypass** 是一个跨平台的验证码识别服务，基于 [onnxruntime-web](https://github.com/microsoft/onnxruntime-web) 完成 ONNX 模型推理，通过 [Bun](https://bun.sh) 编译为独立二进制。支持目标检测、文字识别、旋转验证码、滑块验证码四类能力。
 
 ### 核心特性
 
-- **跨平台**：单份二进制，覆盖 Linux / Windows / macOS / Android 四类平台（amd64 + arm64）。
-- **双运行模式**：CLI 模式适合脚本化调用，Server 模式提供 HTTP 接口与 OpenAPI 文档。
+- **跨平台**：单份二进制，覆盖 Linux / Windows / macOS / Android（x64 / arm64）。
+- **多种接入**：CLI 适合脚本化调用，Server 提供 HTTP 接口与 OpenAPI 文档，另有 MCP 与 Skill 两种 AI Agent 集成方式。
 - **可插拔模型**：支持自定义 ONNX 模型，路径与超参均通过环境变量配置。
-- **AI加成**：可选接入大模型（OpenAI / Anthropic / Google / Ollama 等）完成文字与算术验证码识别。
+- **AI 兜底**：文字与算术识别可接入大模型，支持 OpenAI / Anthropic / Google / Ollama。
 
 ## 快速开始
 
 ### 方式一：二进制 + 模型
 
 1. 从 [Releases][github-release-link] 下载对应平台的二进制、`models.zip` 模型文件及 `public.zip` 静态资源。
-2. 将二进制（建议重命名）与 `models/`、`public/` 放在同一目录：
+2. 将二进制（建议重命名）与 `models/`、`public/` 放在同一目录（`.env` 可选）：
 
 ```
 captcha-bypass/
@@ -51,17 +51,18 @@ captcha-bypass/
 │   ├── ocr_pp.onnx
 │   ├── ocr_pp.json
 │   └── rotate.onnx
-└── public/                        # 可选，静态资源
-    ├── favicon.ico
-    └── robots.txt
+├── public/                        # 可选，静态资源
+│   ├── favicon.ico
+│   └── robots.txt
+└── .env                           # 可选，环境变量配置，参考 .env.example
 ```
 
 3. 启动：
 
 ```bash
-# CLI 模式（仅需结果时指定 LOG_LEVEL=none）
-./captcha-bypass cli captcha ocr --type text --bg https://example.com/captcha.png   # Mac / Linux
-.\captcha-bypass.exe cli captcha ocr --type text --bg https://example.com/captcha.png # Windows
+# CLI 模式：识别一张文字验证码（更多命令见「使用」章节）
+./captcha-bypass cli captcha ocr --type text --bg "https://example.com/captcha.png"      # Mac / Linux
+.\captcha-bypass.exe cli captcha ocr --type text --bg "https://example.com/captcha.png"  # Windows
 
 # Server 模式
 ./captcha-bypass server          # Mac / Linux
@@ -76,27 +77,27 @@ captcha-bypass/
 # 拉取镜像
 docker pull ghcr.io/hiram-wong/captcha-bypass:latest
 
-# CLI 模式
-docker run --rm ghcr.io/hiram-wong/captcha-bypass:latest ./captcha-bypass cli captcha ocr --type text --bg https://example.com/captcha.png
+# CLI 模式：识别一张文字验证码
+docker run --rm ghcr.io/hiram-wong/captcha-bypass:latest ./captcha-bypass cli captcha ocr --type text --bg "https://example.com/captcha.png"
 
 # Server 模式
 docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 ```
 
-> 镜像内置模型，开箱即用；通过 `-e` 传入环境变量覆盖配置。如需自定义模型或日志落盘，参考仓库内 `docker-compose.yml`。
+> 镜像内置模型，开箱即用；通过 `-e` 传入环境变量覆盖配置。如需使用 compose 启动（自定义模型、日志落盘等），参考 [docker-compose.yml](./docker-compose.yml)。
 
 ## 使用
 
 ### 支持的能力
 
-| 能力       | 接口              | 方法 | 模式         | 说明                                   |
-| :--------- | :---------------- | :--- | :----------- | :------------------------------------- |
-| 目标检测   | `/captcha/detect` | POST | CLI / Server | 识别图中目标位置，或匹配目标与背景     |
-| 文字识别   | `/captcha/ocr`    | POST | CLI / Server | 识别文本或算术验证码（支持 AI 兜底）   |
-| 旋转验证码 | `/captcha/rotate` | POST | CLI / Server | 计算旋转角度（单图 / 双圆 / 拼图）     |
-| 滑块验证码 | `/captcha/slide`  | POST | CLI / Server | 计算滑块偏移坐标（匹配 / 对比）        |
-| 健康检查   | `/health`         | GET  | CLI / Server | 存活探测；CLI 下为 `cli health` 子命令 |
-| OpenAPI    | `/docs`           | GET  | Server       | 需启用 `OPENAPI_ENABLE`（默认关闭）    |
+| 能力       | 接口              | 方法 | 模式         | 说明                                 |
+| :--------- | :---------------- | :--- | :----------- | :----------------------------------- |
+| 目标检测   | `/captcha/detect` | POST | CLI / Server | 识别图中目标位置，或匹配目标与背景   |
+| 文字识别   | `/captcha/ocr`    | POST | CLI / Server | 识别文本或算术验证码（支持 AI 兜底） |
+| 旋转验证码 | `/captcha/rotate` | POST | CLI / Server | 计算旋转角度（单图 / 双圆 / 拼图）   |
+| 滑块验证码 | `/captcha/slide`  | POST | CLI / Server | 计算滑块偏移坐标（匹配 / 对比）      |
+| 健康检查   | `/health`         | GET  | CLI / Server | 存活探测                             |
+| OpenAPI    | `/docs`           | GET  | Server       | 需启用 `OPENAPI_ENABLE`（默认关闭）  |
 
 ### 参数与调用
 
@@ -112,17 +113,48 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 
 ### MCP 集成
 
-MCP 服务遵循 [Model Context Protocol](https://modelcontextprotocol.io)，以独立打包的 `.mcpb` 包（`captcha-bypass.mcpb`）随版本发布，可在任意支持 MCP 的客户端（如 Claude Desktop、WorkBuddy 等）中安装使用。
+> **注意**：MCP 包本身不含模型推理，而是作为「代理」调用一个远程的 captcha-bypass HTTP 服务。接入前需先有一个运行中的服务（见「快速开始」）。
 
-#### 安装与配置
+#### 方式一：导入 `.mcpb`
 
-从 [Releases][github-release-link] 下载 `captcha-bypass.mcpb`，安装到你的 MCP 客户端后，配置以下参数指向一个已运行的服务：
+适用于支持 `.mcpb` 格式的客户端（如 Cherry Studio 等）：从 [Releases][github-release-link] 下载 `captcha-bypass.mcpb` 并导入，安装时按提示配置。
 
-| 配置项  | 说明                                                  | 默认值           |
-| :------ | :---------------------------------------------------- | :--------------- |
-| baseURL | HTTP 服务地址                                         | `127.0.0.1:7788` |
-| token   | 服务端 `AUTH_KEYS` 中的任一 key（服务启用认证时必填） | 空               |
-| timeout | 单次识别请求超时（毫秒）                              | `120000`         |
+#### 方式二：`mcpServers` 配置
+
+适用于通用 MCP 客户端（如 Codex 等）。
+
+`.mcpb` 本质是 zip 包，解压后得到 `server/index.js`，使用 node（≥ 20）运行：
+
+```bash
+unzip captcha-bypass.mcpb -d captcha-bypass-mcp
+```
+
+在客户端的 MCP 配置中添加：
+
+```json
+{
+  "mcpServers": {
+    // 或 servers（根据不同的 MCP 客户端决定）
+    "captcha-bypass": {
+      "command": "node",
+      "args": ["/absolute/path/to/captcha-bypass-mcp/server/index.js"],
+      "env": {
+        "BASE_URL": "http://127.0.0.1:7788",
+        "TOKEN": "sk-xxx",
+        "TIMEOUT": "120000"
+      }
+    }
+  }
+}
+```
+
+#### 配置项
+
+| 环境变量 | 说明                                                  | 默认值           |
+| :------- | :---------------------------------------------------- | :--------------- |
+| BASE_URL | HTTP 服务地址（建议带协议前缀）                       | `127.0.0.1:7788` |
+| TOKEN    | 服务端 `AUTH_KEYS` 中的任一 key（服务启用认证时必填） | 空               |
+| TIMEOUT  | 单次识别请求超时（毫秒）                              | `120000`         |
 
 #### 暴露的工具
 
@@ -134,15 +166,25 @@ MCP 服务遵循 [Model Context Protocol](https://modelcontextprotocol.io)，以
 | `captcha_detect` | 目标检测（YOLO 检测或匈牙利匹配）        | `/captcha/detect` |
 | `health`         | 检查远程服务健康状态                     | `/health`         |
 
-### Skill 使用
+### Skill 集成
 
-项目同时提供一个 **Skill**，随版本发布，供 AI Agent（如 Claude Code、WorkBuddy 等）在对话中直接调用验证码识别能力。
+安装技能包后，AI 助手（Claude Code、Codex 等）可在对话中直接调用四类验证码识别能力。
+
+#### 安装
+
+通过 [skills](https://github.com/vercel-labs/skills) CLI 安装到你的 agent：
+
+```bash
+npx skills add https://github.com/Hiram-Wong/captcha-bypass/tree/main/packages/skills/captcha-bypass
+```
+
+#### 使用
 
 Skill 通过环境变量约定运行方式（`CAPTCHA_TYPE`：cli / server 模式、`CAPTCHA_BIN`：二进制路径或服务 URL、`CAPTCHA_KEY`：鉴权 key），首次使用时由 Agent 引导初始化，详见 [SKILL.md](./packages/skills/captcha-bypass/SKILL.md)。
 
 ## 配置
 
-所有配置均通过环境变量设置，参考 `.env.example` 。
+所有配置均通过环境变量设置，完整示例参考 [.env.example](./.env.example)。
 
 | 配置               | 类型                                                                           | 默认值                | 说明                                                                                           |
 | :----------------- | :----------------------------------------------------------------------------- | :-------------------- | :--------------------------------------------------------------------------------------------- |
@@ -150,7 +192,7 @@ Skill 通过环境变量约定运行方式（`CAPTCHA_TYPE`：cli / server 模�
 | LOG_LEVEL          | `"silly"` \| `"debug"` \| `"info"` \| `"warn"` \| `"error"` \| `"none"`        | none                  | 日志级别（从低到高），`none` 表示不输出日志                                                    |
 | PORT               | `number`                                                                       | 7788                  | 服务端口（仅 server 模式）                                                                     |
 | OPENAPI_ENABLE     | `boolean`                                                                      | false                 | 是否启用 OpenAPI 文档（仅 server 模式）                                                        |
-| AUTH_KEYS          | `string[]`（JSON 数组）                                                        | `[]`                  | 认证密钥列表；空数组不启用认证；启用后请求需携带 `Authorization: Bearer <key>`（任一匹配即可） |
+| AUTH_KEYS          | `string[]`                                                                     | `[]`                  | 认证密钥列表；空数组不启用认证；启用后请求需携带 `Authorization: Bearer <key>`（任一匹配即可） |
 | DETECT_MODEL_PATH  | `string`                                                                       | `models/detect.onnx`  | Detect 模型路径                                                                                |
 | DETECT_SHAPE       | `number[]`                                                                     | `[3,416,416]`         | 模型输入尺寸 `[C,H,W]`                                                                         |
 | DETECT_MEAN        | `number[]`                                                                     | `[0,0,0]`             | 均值标准化                                                                                     |
@@ -242,13 +284,13 @@ PP_OCR 模型版权归 [PaddlePaddle](https://github.com/PaddlePaddle/PaddleOCR)
 [github-release-link]: https://github.com/Hiram-Wong/captcha-bypass/releases
 [github-docker-shield]: https://img.shields.io/badge/dynamic/json?url=https://ghcr-badge.elias.eu.org/api/Hiram-Wong/captcha-bypass/captcha-bypass&query=%24.downloadCount&logo=docker&label=Docker%20Pulls
 [github-docker-link]: https://github.com/Hiram-Wong/captcha-bypass/pkgs/container/captcha-bypass
-[github-license-shield]: https://img.shields.io/github/license/Hiram-Wong/captcha-bypass?label=License&logo=appveyor
+[github-license-shield]: https://img.shields.io/github/license/Hiram-Wong/captcha-bypass?label=License&logo=appveyor&colorB=blue
 [github-license-link]: https://github.com/Hiram-Wong/captcha-bypass/blob/main/LICENSE
-[platform-shield]: https://img.shields.io/badge/OS-Linux%2C%20Win%2C%20Mac-blue.svg
+[platform-shield]: https://img.shields.io/badge/OS-Linux%2C%20Win%2C%20Mac%2C%20Android-blue.svg
 
 <!-- Links & Images -->
 
-[deepwiki-shield]: https://deepwiki.com/badge.svg
+[deepwiki-shield]: https://img.shields.io/badge/DeepWiki-Ask_Devin-00b0aa.svg?labelColor=555&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAyCAYAAAAnWDnqAAAAAXNSR0IArs4c6QAAA05JREFUaEPtmUtyEzEQhtWTQyQLHNak2AB7ZnyXZMEjXMGeK/AIi+QuHrMnbChYY7MIh8g01fJoopFb0uhhEqqcbWTp06/uv1saEDv4O3n3dV60RfP947Mm9/SQc0ICFQgzfc4CYZoTPAswgSJCCUJUnAAoRHOAUOcATwbmVLWdGoH//PB8mnKqScAhsD0kYP3j/Yt5LPQe2KvcXmGvRHcDnpxfL2zOYJ1mFwrryWTz0advv1Ut4CJgf5uhDuDj5eUcAUoahrdY/56ebRWeraTjMt/00Sh3UDtjgHtQNHwcRGOC98BJEAEymycmYcWwOprTgcB6VZ5JK5TAJ+fXGLBm3FDAmn6oPPjR4rKCAoJCal2eAiQp2x0vxTPB3ALO2CRkwmDy5WohzBDwSEFKRwPbknEggCPB/imwrycgxX2NzoMCHhPkDwqYMr9tRcP5qNrMZHkVnOjRMWwLCcr8ohBVb1OMjxLwGCvjTikrsBOiA6fNyCrm8V1rP93iVPpwaE+gO0SsWmPiXB+jikdf6SizrT5qKasx5j8ABbHpFTx+vFXp9EnYQmLx02h1QTTrl6eDqxLnGjporxl3NL3agEvXdT0WmEost648sQOYAeJS9Q7bfUVoMGnjo4AZdUMQku50McDcMWcBPvr0SzbTAFDfvJqwLzgxwATnCgnp4wDl6Aa+Ax283gghmj+vj7feE2KBBRMW3FzOpLOADl0Isb5587h/U4gGvkt5v60Z1VLG8BhYjbzRwyQZemwAd6cCR5/XFWLYZRIMpX39AR0tjaGGiGzLVyhse5C9RKC6ai42ppWPKiBagOvaYk8lO7DajerabOZP46Lby5wKjw1HCRx7p9sVMOWGzb/vA1hwiWc6jm3MvQDTogQkiqIhJV0nBQBTU+3okKCFDy9WwferkHjtxib7t3xIUQtHxnIwtx4mpg26/HfwVNVDb4oI9RHmx5WGelRVlrtiw43zboCLaxv46AZeB3IlTkwouebTr1y2NjSpHz68WNFjHvupy3q8TFn3Hos2IAk4Ju5dCo8B3wP7VPr/FGaKiG+T+v+TQqIrOqMTL1VdWV1DdmcbO8KXBz6esmYWYKPwDL5b5FA1a0hwapHiom0r/cKaoqr+27/XcrS5UwSMbQAAAABJRU5ErkJggg==
 [deepwiki-link]: https://deepwiki.com/Hiram-Wong/captcha-bypass
-[zread-shield]: https://img.shields.io/badge/Ask_Zread-_.svg?style=flat&color=00b0aa&labelColor=000000&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8%2BCjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K&logoColor=ffffff
+[zread-shield]: https://img.shields.io/badge/Zread-Ask_Z.ai-00b0aa.svg?labelColor=555&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQuOTYxNTYgMS42MDAxSDIuMjQxNTZDMS44ODgxIDEuNjAwMSAxLjYwMTU2IDEuODg2NjQgMS42MDE1NiAyLjI0MDFWNC45NjAxQzEuNjAxNTYgNS4zMTM1NiAxLjg4ODEgNS42MDAxIDIuMjQxNTYgNS42MDAxSDQuOTYxNTZDNS4zMTUwMiA1LjYwMDEgNS42MDE1NiA1LjMxMzU2IDUuNjAxNTYgNC45NjAxVjIuMjQwMUM1LjYwMTU2IDEuODg2NjQgNS4zMTUwMiAxLjYwMDEgNC45NjE1NiAxLjYwMDFaIiBmaWxsPSIjZmZmIi8+CjxwYXRoIGQ9Ik00Ljk2MTU2IDEwLjM5OTlIMi4yNDE1NkMxLjg4ODEgMTAuMzk5OSAxLjYwMTU2IDEwLjY4NjQgMS42MDE1NiAxMS4wMzk5VjEzLjc1OTlDMS42MDE1NiAxNC4xMTM0IDEuODg4MSAxNC4zOTk5IDIuMjQxNTYgMTQuMzk5OUg0Ljk2MTU2QzUuMzE1MDIgMTQuMzk5OSA1LjYwMTU2IDE0LjExMzQgNS42MDE1NiAxMy43NTk5VjExLjAzOTlDNS42MDE1NiAxMC42ODY0IDUuMzE1MDIgMTAuMzk5OSA0Ljk2MTU2IDEwLjM5OTlaIiBmaWxsPSIjZmZmIi8+CjxwYXRoIGQ9Ik0xMy43NTg0IDEuNjAwMUgxMS4wMzg0QzEwLjY4NSAxLjYwMDEgMTAuMzk4NCAxLjg4NjY0IDEwLjM5ODQgMi4yNDAxVjQuOTYwMUMxMC4zOTg0IDUuMzEzNTYgMTAuNjg1IDUuNjAwMSAxMS4wMzg0IDUuNjAwMUgxMy43NTg0QzE0LjExMTkgNS42MDAxIDE0LjM5ODQgNS4zMTM1NiAxNC4zOTg0IDQuOTYwMVYyLjI0MDFDMTQuMzk4NCAxLjg4NjY0IDE0LjExMTkgMS42MDAxIDEzLjc1ODQgMS42MDAxWiIgZmlsbD0iI2ZmZiIvPgo8cGF0aCBkPSJNNCAxMkwxMiA0TDQgMTJaIiBmaWxsPSIjZmZmIi8+CjxwYXRoIGQ9Ik00IDEyTDEyIDQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K
 [zread-link]: https://zread.ai/Hiram-Wong/captcha-bypass
