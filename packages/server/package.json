@@ -10,10 +10,10 @@
   "dependencies": {
     "@captcha-bypass/core": "workspace:*",
     "@elysia/bearer": "^1.4.4",
-    "@elysia/cors": "^1.4.2",
+    "@elysia/cors": "^1.4.3",
     "@elysia/openapi": "^1.4.17",
     "dateformat": "^5.0.5",
-    "elysia": "^1.4.30",
+    "elysia": "^1.4.31",
     "elysia-requestid": "^1.0.9",
     "rotating-file-stream": "^3.2.10",
     "zod": "^4.6.7"
