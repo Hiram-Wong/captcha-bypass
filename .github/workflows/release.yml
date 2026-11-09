@@ -80,7 +80,22 @@ jobs:
 
   build-binary:
     needs: meta
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - platform: mac
+            os: macos-latest
+            build: 'bun run build:mac'
+          - platform: win
+            os: windows-latest
+            build: 'bun run build:win'
+          - platform: linux
+            os: ubuntu-latest
+            build: 'bun run build:linux'
+          - platform: android
+            os: ubuntu-latest
+            build: 'bun run build:android'
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -101,15 +116,14 @@ jobs:
         shell: bash
         run: |
           PLATFORM="${{ github.event_name == 'push' && 'all' || inputs.platform }}"
-          case "$PLATFORM" in
-            all)     bun run build ;;
-            mac)     bun run build:mac ;;
-            win)     bun run build:win ;;
-            linux)   bun run build:linux ;;
-            android) bun run build:android ;;
-          esac
+          if [[ "$PLATFORM" == "all" || "$PLATFORM" == "${{ matrix.platform }}" ]]; then
+            ${{ matrix.build }}
+          else
+            echo "Skip ${{ matrix.platform }} (requested: $PLATFORM)"
+          fi
 
       - name: Upload binaries
+        if: ${{ github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == matrix.platform }}
         uses: actions/upload-artifact@v7
         with:
           name: binary
