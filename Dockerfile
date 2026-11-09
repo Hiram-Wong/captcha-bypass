@@ -8,7 +8,7 @@ RUN cp /app/.env.example /app/.env && \
 RUN bun install
 ARG TARGETARCH
 RUN ARCH=$( [ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64 ) && \
-    bun scripts/bundle-binary.ts --platform linux --arch $ARCH && \
+    bun run "build:linux:${ARCH}" && \
     mv /app/dist/captcha-bypass-linux-* /app/dist/captcha-bypass
 
 FROM gcr.io/distroless/cc-debian12 AS runtime
