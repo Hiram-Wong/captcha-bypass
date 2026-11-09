@@ -62,6 +62,9 @@ const copyToDist = async (name: 'models' | 'public'): Promise<void> => {
 };
 
 const signDarwin = async (path: string) => {
+  // codesign 仅在 macOS 可用；交叉编译（如 Linux runner）时跳过签名。
+  if (process.platform !== 'darwin') return;
+
   try {
     const removeSign = spawn(['codesign', '--remove-signature', path]);
     await removeSign.exited;

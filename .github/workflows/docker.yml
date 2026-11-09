@@ -2,11 +2,6 @@ name: Docker
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Version tag (e.g. v1.0.0)'
-        required: true
-        default: 'v1.0.0'
   push:
     tags:
       - 'v*'
@@ -34,7 +29,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TAG="${{ inputs.tag }}"
+            TAG="v$(jq -r '.version' package.json)"
           else
             TAG="${GITHUB_REF#refs/tags/}"
           fi
