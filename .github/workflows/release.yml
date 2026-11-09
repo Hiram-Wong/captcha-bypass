@@ -78,9 +78,9 @@ jobs:
             gh api "repos/$REPO/actions/artifacts/{}" -X DELETE || true
           '
 
-  build:
+  build-binary:
     needs: meta
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout repo
         uses: actions/checkout@v7
@@ -109,17 +109,35 @@ jobs:
             android) bun run build:android ;;
           esac
 
-      - name: Build mcpb
-        shell: bash
-        run: bun run build:mcpb
-
       - name: Upload binaries
         uses: actions/upload-artifact@v7
         with:
           name: binary
-          path: |
-            dist/captcha-bypass-*
+          path: dist/captcha-bypass-*
           retention-days: 3
+
+  build-mcpb:
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: '.bun-version'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Set version
+        shell: bash
+        run: npm version "${{ needs.meta.outputs.version }}" --no-git-tag-version --allow-same-version
+
+      - name: Build mcpb
+        shell: bash
+        run: bun run build:mcpb
 
       - name: Upload mcpb
         uses: actions/upload-artifact@v7
@@ -143,8 +161,8 @@ jobs:
           retention-days: 3
 
   release:
-    needs: [meta, build]
-    if: always() && needs.build.result == 'success'
+    needs: [meta, build-binary, build-mcpb]
+    if: always() && needs.build-binary.result == 'success' && needs.build-mcpb.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Download binaries
