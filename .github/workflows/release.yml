@@ -126,7 +126,7 @@ jobs:
         if: ${{ github.event_name == 'push' || inputs.platform == 'all' || inputs.platform == matrix.platform }}
         uses: actions/upload-artifact@v7
         with:
-          name: binary
+          name: binary-${{ matrix.platform }}
           path: dist/captcha-bypass-*
           retention-days: 3
 
@@ -189,8 +189,9 @@ jobs:
       - name: Download binaries
         uses: actions/download-artifact@v8
         with:
-          name: binary
+          pattern: binary-*
           path: dist/
+          merge-multiple: true
 
       - name: Download mcpb
         uses: actions/download-artifact@v8
