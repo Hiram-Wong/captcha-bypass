@@ -3,7 +3,16 @@ import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 
 import type { McpRuntimeConfig } from '../config';
-import type { Executor, ExecutorInput } from './types';
+import type { Executor, ExecutorInput, ExecutorOutput } from './types';
+
+type RequestInput = {
+  url: string;
+  method?: AxiosRequestConfig['method'];
+  headers?: Record<string, string>;
+  params?: Record<string, unknown>;
+  data?: unknown;
+  timeout?: number;
+};
 
 export const createRequestExecutor = (config: McpRuntimeConfig): Executor => {
   const client = axios.create({
@@ -13,13 +22,16 @@ export const createRequestExecutor = (config: McpRuntimeConfig): Executor => {
   });
 
   return async <T>(input: ExecutorInput) => {
-    const { url, method = 'GET', ...data } = input as AxiosRequestConfig;
+    const { url, method = 'GET', headers, params, data: body, timeout } = input as RequestInput;
 
     try {
-      const { data: payload } = await client.request<{ code?: number; msg?: string; data?: T }>({
+      const { data: payload } = await client.request<ExecutorOutput<T>>({
         url,
         method,
-        ...data,
+        headers,
+        params,
+        data: body,
+        timeout,
       });
 
       if (payload.code !== 0) throw new Error(payload.msg || '请求失败');
