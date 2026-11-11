@@ -64,6 +64,7 @@ class OcrAiCaptchaService extends AiCaptchaService {
       apiKey: config.ai.apiKey,
       baseURL: config.ai.baseURL,
       model: config.ai.ocrModel,
+      reqTimeout: config.ai.reqTimeout,
     };
   }
 

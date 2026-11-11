@@ -67,6 +67,7 @@ const ENV_DEFAULTS = {
   AI_API_KEY: '',
   AI_OCR_MODEL: 'PaddleOCR-VL-1.6',
   AI_MODEL: 'gpt-5.5',
+  AI_REQ_TIMEOUT: 15000,
 } as const;
 
 const envSchema = z.object({
@@ -101,6 +102,7 @@ const envSchema = z.object({
   AI_API_KEY: z.string(),
   AI_OCR_MODEL: z.string(),
   AI_MODEL: z.string(),
+  AI_REQ_TIMEOUT: z.coerce.number().min(0),
 });
 
 type Env = z.infer<typeof envSchema>;
@@ -163,6 +165,7 @@ export const config = {
     apiKey: env.AI_API_KEY,
     ocrModel: env.AI_OCR_MODEL,
     model: env.AI_MODEL,
+    reqTimeout: env.AI_REQ_TIMEOUT,
   },
 } as const;
 

@@ -19,6 +19,7 @@ interface LLMOptions {
   apiKey: string;
   baseURL: string;
   model: string;
+  reqTimeout: number;
 }
 
 const logger = log.withContext('MODULE<ai>');
@@ -123,7 +124,7 @@ export class AiCaptchaService {
         messages: [...messages],
         providerOptions: {},
         allowSystemInMessages: true,
-        timeout: 30_000,
+        timeout: options.reqTimeout > 0 ? options.reqTimeout : undefined,
         ...textOptions,
       });
 
