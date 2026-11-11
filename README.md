@@ -115,6 +115,8 @@ docker run -d -p 7788:7788 ghcr.io/hiram-wong/captcha-bypass:latest
 
 > **注意**：MCP 包本身不含模型推理，而是作为「代理」调用一个远程的 captcha-bypass HTTP 服务。接入前需先有一个运行中的服务（见「快速开始」）。
 
+![mcp_math](./docs/demo/mcp_math.png)
+
 #### 方式一：导入 `.mcpb`
 
 适用于支持 `.mcpb` 格式的客户端（如 Cherry Studio 等）：从 [Releases][github-release-link] 下载 `captcha-bypass.mcpb` 并导入，安装时按提示配置。
@@ -169,6 +171,8 @@ unzip captcha-bypass.mcpb -d captcha-bypass-mcp
 ### Skill 集成
 
 安装技能包后，AI 助手（Claude Code、Codex 等）可在对话中直接调用四类验证码识别能力。
+
+![skill_math](./docs/demo/skill_math.png)
 
 #### 安装
 
