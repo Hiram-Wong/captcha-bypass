@@ -160,6 +160,13 @@ jobs:
           path: dist/captcha-bypass.mcpb
           retention-days: 3
 
+  build-assets:
+    needs: meta
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
       - name: Upload models
         uses: actions/upload-artifact@v7
         with:
@@ -175,8 +182,8 @@ jobs:
           retention-days: 3
 
   release:
-    needs: [meta, build-binary, build-mcpb]
-    if: always() && needs.build-binary.result == 'success' && needs.build-mcpb.result == 'success'
+    needs: [meta, build-binary, build-mcpb, build-assets]
+    if: always() && needs.build-binary.result == 'success' && needs.build-mcpb.result == 'success' && needs.build-assets.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Download binaries
