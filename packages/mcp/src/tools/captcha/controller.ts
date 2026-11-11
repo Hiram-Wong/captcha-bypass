@@ -14,7 +14,7 @@ export function captchaController(server: McpServer, executor: Executor): void {
       inputSchema: detectSchema,
       annotations: { readOnlyHint: true },
     },
-    createToolCall((args) => executor({ url: '/captcha/detect', method: 'POST', ...args })),
+    createToolCall((args) => executor({ url: '/captcha/detect', method: 'POST', data: args })),
   );
 
   server.registerTool(
@@ -26,7 +26,7 @@ export function captchaController(server: McpServer, executor: Executor): void {
       inputSchema: ocrSchema,
       annotations: { readOnlyHint: true },
     },
-    createToolCall((args) => executor({ url: '/captcha/ocr', method: 'POST', ...args })),
+    createToolCall((args) => executor({ url: '/captcha/ocr', method: 'POST', data: args })),
   );
 
   server.registerTool(
@@ -38,7 +38,7 @@ export function captchaController(server: McpServer, executor: Executor): void {
       inputSchema: rotateSchema,
       annotations: { readOnlyHint: true },
     },
-    createToolCall((args) => executor({ url: '/captcha/rotate', method: 'POST', ...args })),
+    createToolCall((args) => executor({ url: '/captcha/rotate', method: 'POST', data: args })),
   );
 
   server.registerTool(
@@ -50,7 +50,7 @@ export function captchaController(server: McpServer, executor: Executor): void {
       inputSchema: slideSchema,
       annotations: { readOnlyHint: true },
     },
-    createToolCall((args) => executor({ url: '/captcha/slide', method: 'POST', ...args })),
+    createToolCall((args) => executor({ url: '/captcha/slide', method: 'POST', data: args })),
   );
 }
 
