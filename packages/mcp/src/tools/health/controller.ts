@@ -15,7 +15,7 @@ export function healthController(server: McpServer, executor: Executor): void {
       inputSchema: z.object({}),
       annotations: { readOnlyHint: true },
     },
-    createToolCall(() => executor({ url: '/health' })),
+    createToolCall(() => executor({ url: '/health', method: 'GET' })),
   );
 }
 
