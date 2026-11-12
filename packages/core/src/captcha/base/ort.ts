@@ -33,16 +33,18 @@ interface HungarianResult {
   pairs: HungarianPair[];
 }
 
+// 哈希取自 onnxruntime-web/dist 下的真实文件，升级 onnxruntime-web 后需重新计算：
+// shasum -a 256 node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.{wasm,mjs}
 const FILES = [
   {
     name: 'ort-wasm-simd-threaded.wasm',
     source: wasmBin,
-    hash: 'd1ab1b94b16a65b29d710d0b587b29e7bed336827577623913479b8afe8113e6',
+    hash: '4b884c203b0fa48d057be3332c65513ff85aa3c5bddd6946acc0fab7ecda001d',
   },
   {
     name: 'ort-wasm-simd-threaded.mjs',
     source: mjsBin,
-    hash: '0a1e718d99c41b22c21f2520ff4f9e883a6b5533856e398d21816ee8eb8185d3',
+    hash: '30ed0b5cd1182ede931fea448afb567d4dc705ec957af09f108a2be5f770dac3',
   },
 ] as const;
 
