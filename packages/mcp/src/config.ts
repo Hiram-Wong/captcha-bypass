@@ -11,8 +11,8 @@ export interface McpRuntimeConfig {
   timeout: number;
 }
 
-const DEFAULT_BASE_URL = '127.0.0.1:7788';
-const DEFAULT_TIMEOUT_MS = 120_000;
+const DEFAULT_BASE_URL = 'http://127.0.0.1:7788';
+const DEFAULT_TIMEOUT_MS = 15_000;
 
 // manifest 的 ${user_config.xxx} 占位符在未配置时可能注入字面 "undefined"/"null"，
 // 或用户填写时带入前后空格/换行。先 trim 字符串，再把空值归一到 undefined，走各 schema 的 default。

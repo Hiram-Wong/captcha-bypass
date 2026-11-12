@@ -34,14 +34,14 @@
     "baseURL": {
       "type": "string",
       "title": "服务地址 (baseURL)",
-      "description": "HTTP 服务地址（默认 127.0.0.1:7788）",
-      "default": "127.0.0.1:7788",
+      "description": "服务地址 (默认 http://127.0.0.1:7788)",
+      "default": "http://127.0.0.1:7788",
       "required": false
     },
     "token": {
       "type": "string",
       "title": "认证令牌 (token)",
-      "description": "服务端 AUTH_KEYS 中的任一 key（服务启用认证时必填）",
+      "description": "服务认证令牌 (默认空)",
       "default": "",
       "sensitive": true,
       "required": false
@@ -49,7 +49,7 @@
     "timeout": {
       "type": "number",
       "title": "请求超时 (ms)",
-      "description": "单次识别请求的超时毫秒数 (默认 15000)",
+      "description": "请求超时时间 (默认 15000ms)",
       "default": 15000,
       "required": false
     }
