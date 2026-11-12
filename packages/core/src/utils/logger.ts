@@ -1,6 +1,6 @@
 import { config } from '../config';
 
-import { isJSONValue } from './validate';
+import { isJSONValue, isUndefined } from './validate';
 
 type LogLevel = 'silly' | 'debug' | 'info' | 'warn' | 'error' | 'none';
 type LogLevelExcludeNone = Exclude<LogLevel, 'none'>;
@@ -42,7 +42,7 @@ class Logger {
 
   private shouldLog(level: LogLevelExcludeNone): boolean {
     if (this.currentLevel === 'none') return false;
-    if (!LEVEL_WEIGHT[this.currentLevel]) return false;
+    if (isUndefined(LEVEL_WEIGHT[this.currentLevel])) return false;
     return LEVEL_WEIGHT[level] >= LEVEL_WEIGHT[this.currentLevel];
   }
 
