@@ -217,7 +217,7 @@ Skill 通过环境变量约定运行方式（`CAPTCHA_TYPE`：cli / server 模�
 | AI_API_KEY         | `string`                                                                       | 空字符串              | AI API 密钥                                                                                    |
 | AI_OCR_MODEL       | `string`                                                                       | PaddleOCR-VL-1.6      | OCR 专用模型名（推荐：PaddleOCR、HunyuanOCR、DeepSeek-OCR）                                    |
 | AI_MODEL           | `string`                                                                       | gpt-5.5               | 通用模型名                                                                                     |
-| AI_REQ_TIMEOUT     | `number`                                                                       | 150000                | 请求超时（毫秒）                                                                               |
+| AI_REQ_TIMEOUT     | `number`                                                                       | 15000                 | 请求超时（毫秒）                                                                               |
 
 ## 常见问题
 
