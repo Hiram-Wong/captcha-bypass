@@ -49,8 +49,8 @@
     "timeout": {
       "type": "number",
       "title": "请求超时 (ms)",
-      "description": "单次识别请求的超时毫秒数 (默认 120000)",
-      "default": 120000,
+      "description": "单次识别请求的超时毫秒数 (默认 15000)",
+      "default": 15000,
       "required": false
     }
   },

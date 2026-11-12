@@ -143,7 +143,7 @@ unzip captcha-bypass.mcpb -d captcha-bypass-mcp
       "env": {
         "BASE_URL": "http://127.0.0.1:7788",
         "TOKEN": "sk-xxx",
-        "TIMEOUT": "120000"
+        "TIMEOUT": "15000"
       }
     }
   }
