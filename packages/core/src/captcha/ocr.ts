@@ -118,7 +118,7 @@ class OcrAiCaptchaService extends AiCaptchaService {
     try {
       result = Function(`"use strict"; return (${formula})`)();
 
-      if (typeof result !== 'number' || Number.isNaN(result)) {
+      if (typeof result !== 'number' || !Number.isFinite(result)) {
         throw new Error('Invalid formula expression result');
       }
     } catch {
@@ -272,7 +272,7 @@ class OcrOrtCaptchaService extends BaseOrtservice {
     try {
       result = Function(`"use strict"; return (${formula})`)();
 
-      if (typeof result !== 'number' || Number.isNaN(result)) {
+      if (typeof result !== 'number' || !Number.isFinite(result)) {
         throw new Error('Invalid formula expression result');
       }
     } catch {
