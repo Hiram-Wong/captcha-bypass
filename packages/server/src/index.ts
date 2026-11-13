@@ -105,7 +105,7 @@ const setupServer = async (): Promise<void> => {
         return status(400, fail(error instanceof Error ? error.message : '请求参数校验失败'));
       }
 
-      if (isNumber(code) || ['UNKNOWN', 'INTERNAL_SERVER_ERROR'].includes('code')) console.error(error);
+      if (isNumber(code) || ['UNKNOWN', 'INTERNAL_SERVER_ERROR'].includes(code)) console.error(error);
       return status(500, fail('服务器内部错误'));
     })
     .use(captchaController)
