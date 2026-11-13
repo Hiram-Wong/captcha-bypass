@@ -16,6 +16,14 @@ export type RotateResult = {
   ccw: number;
 };
 
+const toRotateResult = (cw: number): RotateResult => {
+  const norm = (deg: number) => ((deg % 360) + 360) % 360;
+
+  const angle = norm(Math.round(cw));
+
+  return { cw: angle, ccw: norm(-angle) };
+};
+
 class RotateOrtCaptchaService extends BaseOrtservice {
   private static instance: RotateOrtCaptchaService | null = null;
 
@@ -97,10 +105,10 @@ class RotateOrtCaptchaService extends BaseOrtservice {
       }
     }
 
-    const degree = (maxIdx / clsNum) * 360;
-    const cw = Math.round((degree + 360) % 360);
+    const bestAngle = (maxIdx / clsNum) * 360;
+    if (bestAngle < 0 || bestAngle === Infinity || Number.isNaN(bestAngle)) throw new Error('旋转角度匹配失败');
 
-    return { cw, ccw: 360 - cw };
+    return toRotateResult(bestAngle);
   }
 }
 
@@ -118,11 +126,12 @@ class RotateCvCaptchaService extends BaseCvService {
 
   /**
    * 两级旋转角度搜索
-   * @param scoreFn 评分函数, 返回数值
+   * @param scoreFn 评分函数, 入参 angle 为顺时针修正角, 返回数值
    * @param minimize true=找最小值, false=找最大值
    * @param coarseStep 粗搜索步长 (度)
    * @param fineStep 精搜索步长 (度)
    * @param fineWindow 精搜索窗口 (±粗搜索最佳角度)
+   * @returns angle 为顺时针修正角 (把图顺时针转该角度即可对齐), score 为最佳得分
    */
   private rotateSearch(
     scoreFn: (angle: number) => number,
@@ -186,7 +195,7 @@ class RotateCvCaptchaService extends BaseCvService {
       const { angle: bestAngle, score: bestScore } = this.rotateSearch(
         (angle) => {
           const center = new cv.Point(grayThumbMat.cols / 2, grayThumbMat.rows / 2);
-          const M = mats.add(cv.getRotationMatrix2D(center, angle, 1));
+          const M = mats.add(cv.getRotationMatrix2D(center, -angle, 1));
           const rotated = mats.add(new cv.Mat());
           const rotatedMask = mats.add(new cv.Mat());
           const size = new cv.Size(grayThumbMat.cols, grayThumbMat.rows);
@@ -205,11 +214,9 @@ class RotateCvCaptchaService extends BaseCvService {
         5,
       );
 
-      if (!Number.isFinite(bestScore)) throw new Error('旋转角度匹配失败');
+      if (bestScore < 0 || bestScore === Infinity || Number.isNaN(bestScore)) throw new Error('旋转角度匹配失败');
 
-      const cw = (bestAngle + 360) % 360;
-
-      return { cw, ccw: 360 - cw };
+      return toRotateResult(bestAngle);
     } finally {
       mats.release();
     }
@@ -284,7 +291,7 @@ class RotateCvCaptchaService extends BaseCvService {
           const w = thumbRGBA.cols;
           const h = thumbRGBA.rows;
           const center = new cv.Point(w / 2, h / 2);
-          const M = mats.add(cv.getRotationMatrix2D(center, angle, 1));
+          const M = mats.add(cv.getRotationMatrix2D(center, -angle, 1));
           const rotated = mats.add(new cv.Mat());
 
           cv.warpAffine(
@@ -325,11 +332,9 @@ class RotateCvCaptchaService extends BaseCvService {
         2,
       );
 
-      if (!Number.isFinite(bestScore)) throw new Error('旋转角度匹配失败');
+      if (bestScore < 0 || bestScore === Infinity || Number.isNaN(bestScore)) throw new Error('旋转角度匹配失败');
 
-      const cw = (bestAngle + 360) % 360;
-
-      return { cw, ccw: 360 - cw };
+      return toRotateResult(bestAngle);
     } finally {
       mats.release();
     }
