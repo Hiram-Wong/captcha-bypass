@@ -1,10 +1,11 @@
 import { mkdir, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { CryptoHasher, file, JSON5, write } from 'bun';
+import { file, JSON5, write } from 'bun';
 import type { Tensor } from 'onnxruntime-web';
 import { InferenceSession, env as ortEnv } from 'onnxruntime-web';
 
+import { sha256 } from '../../utils/hash';
 import { log } from '../../utils/logger';
 import { ROOT_PATH } from '../../utils/path';
 import { isPackaged } from '../../utils/systemInfo';
@@ -79,8 +80,7 @@ class OrtWasmManager {
       const destFile = file(dest);
 
       if (await destFile.exists()) {
-        const destHash = new CryptoHasher('sha256').update(await destFile.bytes()).digest('hex');
-        if (destHash === hash) continue;
+        if ((await sha256(destFile)) === hash) continue;
       }
 
       await write(dest, await file(source).bytes());
