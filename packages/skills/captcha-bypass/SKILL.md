@@ -1,7 +1,7 @@
 ---
 name: captcha-bypass
 description: 验证码识别与绕过。识别文字/算术 OCR 验证码、滑块验证码、旋转验证码、目标检测验证码。支持 CLI 命令行调用与 HTTP Server（远程服务，支持鉴权）两种方式。全部基于本地 ONNX 模型推理，无需 GPU、无需外部 API。
-version: 1.1.2
+version: 1.1.3
 ---
 
 # 验证码识别与绕过

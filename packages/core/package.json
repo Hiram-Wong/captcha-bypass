@@ -1,6 +1,6 @@
 {
   "name": "@captcha-bypass/core",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -11,13 +11,13 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.97",
-    "@ai-sdk/google": "^4.0.112",
-    "@ai-sdk/openai": "^4.0.109",
-    "@ai-sdk/openai-compatible": "^3.0.85",
+    "@ai-sdk/anthropic": "^4.0.99",
+    "@ai-sdk/google": "^4.0.114",
+    "@ai-sdk/openai": "^4.0.111",
+    "@ai-sdk/openai-compatible": "^3.0.87",
     "@techstark/opencv-js": "^5.0.0-release.1",
-    "ai": "^7.0.163",
-    "dotenv": "^18.0.9",
+    "ai": "^7.0.166",
+    "dotenv": "^18.0.10",
     "file-type": "^22.3.0",
     "jimp": "^1.6.1",
     "json5": "2.2.3",

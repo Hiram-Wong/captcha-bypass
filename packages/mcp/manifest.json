@@ -3,7 +3,7 @@
   "manifest_version": "0.3",
   "name": "captcha-bypass",
   "display_name": "Captcha Bypass",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Captcha bypass service: OCR / rotate / slide / detect captcha recognition via a remote HTTP service.",
   "long_description": "MCP server for captcha-bypass. Provides four captcha tools (ocr, rotate, slide, detect), calling a remote captcha-bypass HTTP service (requires the server URL and optional auth params, configured at install time via user_config).",
   "author": {
