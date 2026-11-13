@@ -51,7 +51,7 @@ const FILES = [
 
 class OrtWasmManager {
   private static instance: OrtWasmManager | null = null;
-  private isMountWasm: boolean = false;
+  private mounting: Promise<void> | null = null;
   private releaseDir: string = resolve(ROOT_PATH, 'ort-wasm/');
 
   static getInstance(): OrtWasmManager {
@@ -61,9 +61,26 @@ class OrtWasmManager {
     return OrtWasmManager.instance;
   }
 
-  async releaseWasm(): Promise<void> {
-    if (this.isMountWasm === true) return;
+  init(): Promise<void> {
+    this.mounting ??= this.doInit().catch((err: unknown) => {
+      this.mounting = null;
+      throw err;
+    }); // a ?? (a = b)
 
+    return this.mounting;
+  }
+
+  private async doInit(): Promise<void> {
+    if (!isPackaged) return;
+
+    await this.releaseWasm();
+    ortEnv.wasm.wasmPaths = {
+      mjs: resolve(this.releaseDir, FILES[1].name),
+      wasm: resolve(this.releaseDir, FILES[0].name),
+    };
+  }
+
+  private async releaseWasm(): Promise<void> {
     const baseFile = file(this.releaseDir);
     try {
       const stats = await baseFile.stat();
@@ -84,18 +101,6 @@ class OrtWasmManager {
       }
 
       await write(dest, await file(source).bytes());
-    }
-
-    this.isMountWasm = true;
-  }
-
-  async init(): Promise<void> {
-    if (isPackaged) {
-      await this.releaseWasm();
-      ortEnv.wasm.wasmPaths = {
-        mjs: resolve(this.releaseDir, FILES[1].name),
-        wasm: resolve(this.releaseDir, FILES[0].name),
-      };
     }
   }
 }
