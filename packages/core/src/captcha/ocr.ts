@@ -9,6 +9,7 @@ import { config } from '../config';
 import { base64ToMediaType, toMath } from '../utils/format';
 import { log } from '../utils/logger';
 import { ROOT_PATH } from '../utils/path';
+import { isNumber, isString } from '../utils/validate';
 
 import { AiCaptchaService } from './base/ai';
 import { BaseOrtservice } from './base/ort';
@@ -114,18 +115,18 @@ class OcrAiCaptchaService extends AiCaptchaService {
     formula = toMath(formula);
     if (!formula) throw new Error('Formula expression error');
 
-    let result: unknown;
+    let result: number;
     try {
       result = Function(`"use strict"; return (${formula})`)();
 
-      if (typeof result !== 'number' || !Number.isFinite(result)) {
+      if (!isNumber(result) || !Number.isFinite(result)) {
         throw new Error('Invalid formula expression result');
       }
     } catch {
       throw new Error('Invalid formula expression');
     }
 
-    return { formula, result };
+    return { formula, result: result };
   }
 }
 
@@ -239,7 +240,7 @@ class OcrOrtCaptchaService extends BaseOrtservice {
       allowedIndices,
       layout: ctc.layout,
     });
-    const text = typeof ctcDecode === 'string' ? ctcDecode : ctcDecode[0];
+    const text = isString(ctcDecode) ? ctcDecode : ctcDecode[0];
     logger.debug(`raw ctc decode: ${text}`);
 
     const result = text.replace(/\s/g, '');
@@ -268,18 +269,18 @@ class OcrOrtCaptchaService extends BaseOrtservice {
     formula = toMath(formula);
     if (!formula) throw new Error('Formula expression error');
 
-    let result: unknown;
+    let result: number;
     try {
       result = Function(`"use strict"; return (${formula})`)();
 
-      if (typeof result !== 'number' || !Number.isFinite(result)) {
+      if (!isNumber(result) || !Number.isFinite(result)) {
         throw new Error('Invalid formula expression result');
       }
     } catch {
       throw new Error('Invalid formula expression');
     }
 
-    return { formula, result };
+    return { formula, result: result };
   }
 }
 

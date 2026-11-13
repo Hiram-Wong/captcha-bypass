@@ -8,7 +8,7 @@ import { createOllama } from 'ollama-ai-provider-v2';
 
 import { log } from '../../utils/logger';
 import { isPackaged } from '../../utils/systemInfo';
-import { isHttp, isJSONArray, isString } from '../../utils/validate';
+import { isHttp, isJSONArray, isJSONObject, isString } from '../../utils/validate';
 
 type LLMSupportProvider = 'anthropic' | 'google' | 'ollama' | 'openai' | 'openai-response';
 type LLMProvider = (modelId: string) => LanguageModel;
@@ -63,7 +63,7 @@ export class AiCaptchaService {
       throw new Error('Messages invalid');
     }
 
-    if (typeof options !== 'object' || !Object.keys(options).length) {
+    if (!isJSONObject(options) || !Object.keys(options).length) {
       throw new Error('Invalid LLM options');
     }
 

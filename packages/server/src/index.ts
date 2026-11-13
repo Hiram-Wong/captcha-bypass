@@ -12,7 +12,7 @@ import { initDetectCaptcha, initOcrCaptcha, initRotateCaptcha, initSlideCaptcha 
 import { config } from '@captcha-bypass/core/config';
 import { APP_DESC, APP_NAME, APP_VERSION } from '@captcha-bypass/core/utils/appInfo';
 import { fail } from '@captcha-bypass/core/utils/response';
-import { isJSONStr } from '@captcha-bypass/core/utils/validate';
+import { isJSONStr, isNumber } from '@captcha-bypass/core/utils/validate';
 import { isPackaged } from '@captcha-bypass/core/utils/systemInfo';
 import { log } from '@captcha-bypass/core/utils/logger';
 
@@ -105,7 +105,7 @@ const setupServer = async (): Promise<void> => {
         return status(400, fail(error instanceof Error ? error.message : '请求参数校验失败'));
       }
 
-      if (typeof code === 'number' || ['UNKNOWN', 'INTERNAL_SERVER_ERROR'].includes('code')) console.error(error);
+      if (isNumber(code) || ['UNKNOWN', 'INTERNAL_SERVER_ERROR'].includes('code')) console.error(error);
       return status(500, fail('服务器内部错误'));
     })
     .use(captchaController)

@@ -5,13 +5,13 @@ import process from 'node:process';
 import { JSON5 } from 'bun';
 import { z } from 'zod';
 
-import { isJSONStr } from './utils/validate';
+import { isBoolean, isJSONStr, isString } from './utils/validate';
 
 const booleanSchema = z.preprocess((value) => {
   if (value === undefined) return false;
-  if (typeof value === 'boolean') return value;
+  if (isBoolean(value)) return value;
 
-  if (typeof value === 'string') {
+  if (isString(value)) {
     const v = value.toLowerCase();
 
     if (['1', 'true', 'yes', 'on'].includes(v)) return true;

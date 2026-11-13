@@ -2,7 +2,7 @@ import { file } from 'bun';
 import { fileTypeFromBuffer } from 'file-type';
 
 import type { ImageInput } from '../types/shared';
-import { isBufferFile, isHttp, isImageMime, isFile } from './validate';
+import { isBufferFile, isHttp, isImageMime, isFile, isString } from './validate';
 
 export const toImageBase64 = async (data: ImageInput): Promise<string> => {
   // Buffered upload file
@@ -19,7 +19,7 @@ export const toImageBase64 = async (data: ImageInput): Promise<string> => {
   }
 
   // URL
-  if (typeof data === 'string') {
+  if (isString(data)) {
     if (/^data:(.+?);base64,/.test(data)) return data;
 
     if (isHttp(data)) {

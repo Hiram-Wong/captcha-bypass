@@ -7,6 +7,7 @@ import { Elysia } from 'elysia';
 import { createStream, type Options as RotatingFileStreamOptions } from 'rotating-file-stream';
 
 import { ROOT_PATH } from '@captcha-bypass/core/utils/path';
+import { isUndefined } from '@captcha-bypass/core/utils/validate';
 
 interface LoggerOptions {
   dir?: string;
@@ -34,7 +35,7 @@ const createLogGenerator = (prefix: string) => (time?: Date | number | null, ind
   if (!time) return `${prefix}.log`;
 
   const date = dateFormat(time ?? new Date(), 'yyyy-mm-dd');
-  return typeof index === 'undefined' || index <= 1 ? `${prefix}-${date}.log` : `${prefix}-${date}.${index}.log`;
+  return isUndefined(index) || index <= 1 ? `${prefix}-${date}.log` : `${prefix}-${date}.${index}.log`;
   // return `${prefix}-${date}.log`;
 };
 
